@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScreenId } from '../types';
+import { ScreenId, UserProfile } from '../types';
 import { 
   Building2, 
   Smartphone, 
@@ -12,7 +12,10 @@ import {
   Minimize2,
   Bell,
   Search,
-  SlidersHorizontal
+  SlidersHorizontal,
+  KeyRound,
+  User,
+  LogOut
 } from 'lucide-react';
 
 interface NavigationHeaderProps {
@@ -22,6 +25,7 @@ interface NavigationHeaderProps {
   onToggleMobileFrame: () => void;
   onOpenSearch: () => void;
   onShowToast: (msg: string) => void;
+  currentUser?: UserProfile | null;
 }
 
 export const NavigationHeader: React.FC<NavigationHeaderProps> = ({
@@ -30,72 +34,96 @@ export const NavigationHeader: React.FC<NavigationHeaderProps> = ({
   isMobileFrame,
   onToggleMobileFrame,
   onOpenSearch,
-  onShowToast
+  onShowToast,
+  currentUser
 }) => {
-  const screens: { id: ScreenId; label: string; icon: React.ReactNode; badge?: string; category: 'Enterprise' | 'Customer' | 'Pharmacy' | 'Manufacturer' | 'Architecture' }[] = [
+  const screens: { id: ScreenId; label: string; icon: React.ReactNode; badge?: string; category: 'Enterprise' | 'Customer' | 'Pharmacy' | 'Manufacturer' | 'Architecture' | 'Auth' }[] = [
     { id: 'enterprise-ops', label: 'Enterprise Gateway', icon: <Building2 className="w-4 h-4" />, badge: 'SOC-2', category: 'Enterprise' },
     { id: 'customer-app', label: 'Customer Search', icon: <Smartphone className="w-4 h-4" />, category: 'Customer' },
     { id: 'rx-scanner', label: 'Prescription OCR', icon: <ScanLine className="w-4 h-4" />, badge: 'AI', category: 'Customer' },
     { id: 'order-tracking', label: 'Live Order Track', icon: <Truck className="w-4 h-4" />, badge: '8410', category: 'Customer' },
     { id: 'pharmacy-portal', label: 'Pharmacy Workbench', icon: <Store className="w-4 h-4" />, badge: '18', category: 'Pharmacy' },
     { id: 'manufacturer-portal', label: 'Manufacturer Portal', icon: <Factory className="w-4 h-4" />, category: 'Manufacturer' },
-    { id: 'system-architecture', label: 'System Architecture', icon: <Network className="w-4 h-4" />, category: 'Architecture' }
+    { id: 'system-architecture', label: 'System Architecture', icon: <Network className="w-4 h-4" />, category: 'Architecture' },
+    { id: 'auth', label: 'Login & Register', icon: <KeyRound className="w-4 h-4" />, badge: currentUser ? 'Signed In' : 'Sign In', category: 'Auth' }
   ];
 
-  const isConsumerScreen = currentScreen === 'customer-app' || currentScreen === 'rx-scanner' || currentScreen === 'order-tracking';
+  const isConsumerScreen = currentScreen === 'customer-app' || currentScreen === 'rx-scanner' || currentScreen === 'order-tracking' || currentScreen === 'auth';
 
   return (
     <div className="bg-[#001026] text-white border-b border-[#0b2545] sticky top-0 z-50 shadow-md">
-      <div className="max-w-[1920px] mx-auto px-3 sm:px-5 py-2 flex flex-wrap items-center justify-between gap-3">
+      <div className="max-w-[1920px] mx-auto px-3 sm:px-5 h-12 sm:h-13 flex items-center justify-between gap-2 sm:gap-4 overflow-hidden">
         {/* Brand & Mode Switcher Label */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5 flex-shrink-0">
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => onSelectScreen('enterprise-ops')}>
             <div className="w-7 h-7 rounded-lg bg-[#0b2545] border border-[#6cf8bb]/40 flex items-center justify-center text-[#6cf8bb] font-bold text-sm">
               <span className="material-symbols-outlined text-[18px]">health_and_safety</span>
             </div>
             <div className="leading-tight">
               <span className="text-xs font-extrabold tracking-tight text-white flex items-center gap-1.5">
                 GenericMed
-                <span className="text-[9px] font-mono px-1.5 py-0.2 bg-[#006c49]/30 text-[#6cf8bb] border border-[#006c49]/60 rounded-full font-bold">
+                <span className="hidden xl:inline text-[9px] font-mono px-1.5 py-0.2 bg-[#006c49]/30 text-[#6cf8bb] border border-[#006c49]/60 rounded-full font-bold">
                   MULTI-SCREEN DEMO
                 </span>
               </span>
             </div>
           </div>
 
-          <div className="hidden md:block h-4 w-px bg-white/20"></div>
-
-          {/* Screen Tabs List */}
-          <div className="flex items-center gap-1 overflow-x-auto py-0.5 max-w-full scrollbar-none">
-            {screens.map((screen) => {
-              const active = currentScreen === screen.id;
-              return (
-                <button
-                  key={screen.id}
-                  onClick={() => onSelectScreen(screen.id)}
-                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all duration-150 ${
-                    active
-                      ? 'bg-[#006c49] text-white font-bold shadow-sm ring-1 ring-[#6cf8bb]/50'
-                      : 'text-slate-300 hover:text-white hover:bg-white/10'
-                  }`}
-                >
-                  {screen.icon}
-                  <span>{screen.label}</span>
-                  {screen.badge && (
-                    <span className={`text-[10px] px-1 py-0.1 rounded font-mono font-bold ${
-                      active ? 'bg-[#6cf8bb] text-[#002113]' : 'bg-white/15 text-slate-200'
-                    }`}>
-                      {screen.badge}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+          <div className="hidden lg:block h-4 w-px bg-white/20"></div>
         </div>
 
-        {/* Right side utilities: Frame toggle for mobile screens, quick search, toast trigger */}
-        <div className="flex items-center gap-2">
+        {/* Screen Tabs List - Smooth scrollable without wrapping */}
+        <div className="flex-1 min-w-0 flex items-center gap-1 overflow-x-auto py-1 scrollbar-none">
+          {screens.map((screen) => {
+            const active = currentScreen === screen.id;
+            return (
+              <button
+                key={screen.id}
+                onClick={() => onSelectScreen(screen.id)}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all duration-150 flex-shrink-0 ${
+                  active
+                    ? 'bg-[#006c49] text-white font-bold shadow-sm ring-1 ring-[#6cf8bb]/50'
+                    : 'text-slate-300 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                {screen.icon}
+                <span className="hidden md:inline">{screen.label}</span>
+                <span className="md:hidden">{screen.category || screen.label.split(' ')[0]}</span>
+                {screen.badge && (
+                  <span className={`text-[10px] px-1 py-0.1 rounded font-mono font-bold ${
+                    active ? 'bg-[#6cf8bb] text-[#002113]' : 'bg-white/15 text-slate-200'
+                  }`}>
+                    {screen.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Right side utilities: Frame toggle for mobile screens, quick search, toast trigger, and user account pill */}
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+          {/* User Account / Sign In Pill */}
+          <button
+            onClick={() => onSelectScreen('auth')}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all ${
+              currentScreen === 'auth'
+                ? 'bg-[#006c49] border-[#6cf8bb] text-white'
+                : 'bg-white/10 hover:bg-white/20 border-white/10 text-slate-200'
+            }`}
+            title={currentUser ? `Signed in as ${currentUser.name} (${currentUser.role})` : 'Sign In / Register'}
+          >
+            <User className="w-3.5 h-3.5 text-[#6cf8bb]" />
+            <span className="hidden sm:inline truncate max-w-[130px]">
+              {currentUser ? currentUser.name : 'Sign In'}
+            </span>
+            {currentUser && (
+              <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-[#6cf8bb]/20 text-[#6cf8bb] font-bold uppercase hidden md:inline">
+                {currentUser.role.replace('_', ' ')}
+              </span>
+            )}
+          </button>
+
           {isConsumerScreen && (
             <button
               onClick={onToggleMobileFrame}

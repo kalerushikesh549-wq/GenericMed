@@ -1,4 +1,4 @@
-import { MedicineItem, PrescriptionOrder, PharmacyHub, BatchLot, WholesaleOrder } from '../types';
+import { MedicineItem, PrescriptionOrder, PharmacyHub, BatchLot, WholesaleOrder, UserProfile } from '../types';
 
 export const MEDICINES: MedicineItem[] = [
   {
@@ -255,3 +255,49 @@ export const ASSET_IMAGES = {
   brooklynMap: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD492FHwz5W_w0AD0VqMQYEvUc4JaeyNkp-2O8qjHII1bgBapj-thMAfSyFqD5cqgompeBsUdU0RbqLiJF5JaikEMJLk6b3bLHO8mRpmMoQkJ52-QLGy3S_Fv651cXVoV0VVvKEkW2mnRZXrz1KucfuKpT_IIsuXkK-Vev3p2svPCnhTY2tk4rgBieqMslwxDkbqiPtNAQScZJ73x205VcbMW76pBMzoV6eY8v7sTIBNndFSteOFe6nnw',
   manufacturerHeadshot: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAoq2MnD_-r680oQeIIoA1z4avoYdImYFUpXjJWACSo9RTJVYHnaiCO0COqzEhsLPoumzYH65b06UV433fYpqJ4htaJsATNTQ7-uQLX7qWXphhKdPXO7_l0o7Gh7_GTmOQL1H0ACTDtkPV-wcIkJzG5cV-Tc6mSmGUMJcXCnPPHVPehUmItvAUsph2Rxjgx-337xdPHx8cCsL0FpwQXgJIyrTFn7-2JtpfFQOleDotxzzVJ97dduTL0zg'
 };
+
+export const DEMO_USERS: UserProfile[] = [
+  {
+    id: 'user-patient-1',
+    name: 'Johnathan Doe',
+    email: 'johnathan.doe@gmail.com',
+    phone: '+1 (718) 555-0142',
+    role: 'patient',
+    deliveryAddress: '742 Evergreen Terr, Brooklyn NY 11201',
+    activePrescriptionsCount: 3,
+    joinedDate: 'March 2024'
+  },
+  {
+    id: 'user-pharm-1',
+    name: 'Dr. Marcus Vance, PharmD',
+    email: 'm.vance@metrocarerx.com',
+    phone: '+1 (718) 555-4082',
+    role: 'pharmacist',
+    licenseNumber: 'GDL-99201-MH (NY State Board)',
+    facilityName: 'MetroCare Central Dispensary #4082',
+    deliveryAddress: '142 Court St, Brooklyn NY 11201',
+    activePrescriptionsCount: 18,
+    joinedDate: 'January 2023'
+  },
+  {
+    id: 'user-mfg-1',
+    name: 'Dr. Alistair Vance',
+    email: 'a.vance@apexbio.com',
+    phone: '+1 (212) 555-9004',
+    role: 'manufacturer',
+    licenseNumber: 'FDA FEI #300482910',
+    companyName: 'Apex BioPharma Labs (Plant 4)',
+    joinedDate: 'June 2022'
+  },
+  {
+    id: 'user-admin-1',
+    name: 'Dr. Elena Rostova',
+    email: 'elena.rostova@genericmed.health',
+    phone: '+1 (212) 555-0199',
+    role: 'enterprise_admin',
+    licenseNumber: 'MD-884102-NY (Board Certified)',
+    facilityName: 'GenericMed Enterprise Operations Mesh',
+    joinedDate: 'September 2021'
+  }
+];
+

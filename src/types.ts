@@ -9,7 +9,25 @@ export type ScreenId =
   | 'order-tracking'
   | 'pharmacy-portal'
   | 'manufacturer-portal'
-  | 'system-architecture';
+  | 'system-architecture'
+  | 'auth';
+
+export type UserRole = 'patient' | 'pharmacist' | 'manufacturer' | 'enterprise_admin';
+
+export interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: UserRole;
+  avatar?: string;
+  licenseNumber?: string;
+  facilityName?: string;
+  companyName?: string;
+  deliveryAddress?: string;
+  activePrescriptionsCount?: number;
+  joinedDate: string;
+}
 
 export type CustomerTab = 'home' | 'compare' | 'rx' | 'orders' | 'account';
 

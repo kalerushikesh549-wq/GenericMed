@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ScreenId } from './types';
+import { ScreenId, UserProfile } from './types';
 import { NavigationHeader } from './components/NavigationHeader';
 import { EnterpriseOpsScreen } from './components/screens/EnterpriseOpsScreen';
 import { CustomerAppScreen } from './components/screens/CustomerAppScreen';
@@ -8,17 +8,31 @@ import { OrderTrackingScreen } from './components/screens/OrderTrackingScreen';
 import { PharmacyPortalScreen } from './components/screens/PharmacyPortalScreen';
 import { ManufacturerPortalScreen } from './components/screens/ManufacturerPortalScreen';
 import { SystemArchitectureScreen } from './components/screens/SystemArchitectureScreen';
-import { MEDICINES } from './data/mockData';
+import { AuthScreen } from './components/screens/AuthScreen';
+import { MEDICINES, DEMO_USERS } from './data/mockData';
 
 export function App() {
   const [currentScreen, setCurrentScreen] = useState<ScreenId>('enterprise-ops');
   const [isMobileFrame, setIsMobileFrame] = useState(false);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(DEMO_USERS[0]);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showGlobalSearch, setShowGlobalSearch] = useState(false);
   const [globalSearchInput, setGlobalSearchInput] = useState('');
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
+  };
+
+  const handleLogin = (user: UserProfile) => {
+    setCurrentUser(user);
+  };
+
+  const handleRegister = (newUser: UserProfile) => {
+    setCurrentUser(newUser);
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
   };
 
   // Auto-dismiss toast
@@ -69,6 +83,7 @@ export function App() {
         onToggleMobileFrame={() => setIsMobileFrame(!isMobileFrame)}
         onOpenSearch={() => setShowGlobalSearch(true)}
         onShowToast={showToast}
+        currentUser={currentUser}
       />
 
       {/* Screen View Canvas */}
@@ -85,6 +100,7 @@ export function App() {
             onNavigateScreen={handleSelectScreen}
             onShowToast={showToast}
             isMobileFrame={isMobileFrame}
+            currentUser={currentUser}
           />
         )}
 
@@ -122,6 +138,18 @@ export function App() {
           <SystemArchitectureScreen
             onNavigateScreen={handleSelectScreen}
             onShowToast={showToast}
+          />
+        )}
+
+        {currentScreen === 'auth' && (
+          <AuthScreen
+            currentUser={currentUser}
+            onLogin={handleLogin}
+            onRegister={handleRegister}
+            onLogout={handleLogout}
+            onNavigateScreen={handleSelectScreen}
+            onShowToast={showToast}
+            isMobileFrame={isMobileFrame}
           />
         )}
       </div>
@@ -169,7 +197,8 @@ export function App() {
                   { id: 'order-tracking' as ScreenId, name: '🚚 Live Order Tracking' },
                   { id: 'pharmacy-portal' as ScreenId, name: '🏥 Pharmacy Workbench' },
                   { id: 'manufacturer-portal' as ScreenId, name: '🏭 Manufacturer Portal' },
-                  { id: 'system-architecture' as ScreenId, name: '🗺️ System Architecture' }
+                  { id: 'system-architecture' as ScreenId, name: '🗺️ System Architecture' },
+                  { id: 'auth' as ScreenId, name: '🔐 Login & Register / Account' }
                 ].map(item => (
                   <button
                     key={item.id}

@@ -65,239 +65,272 @@ export const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({
       </header>
 
       {/* Main Content */}
-      <main className="max-w-2xl mx-auto w-full px-4 pt-4 space-y-4 flex-1">
-        {/* Dynamic Status Progress Card */}
-        <div className="bg-[#001026] text-white rounded-2xl p-4 sm:p-5 shadow-md space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#6cf8bb] animate-ping"></span>
-              <span className="font-display font-bold text-base text-white">
-                Arriving in 14 Mins
-              </span>
-            </div>
-            <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#006c49] text-white">
-              35-min Express
-            </span>
-          </div>
-
-          <div>
-            <div className="text-xs text-slate-300">Delivering to:</div>
-            <div className="font-bold text-white text-sm mt-0.5">{CURRENT_ORDER.deliveryAddress}</div>
-          </div>
-
-          {/* Progress Bar */}
-          <div className="space-y-1.5 pt-1">
-            <div className="flex justify-between text-[11px] text-slate-300">
-              <span>Dispatched from MetroCare Hub</span>
-              <span className="font-bold text-[#6cf8bb]">Estimated: 09:06 AM</span>
-            </div>
-            <div className="w-full bg-white/20 h-2 rounded-full overflow-hidden">
-              <div className="bg-[#6cf8bb] h-full rounded-full transition-all duration-500" style={{ width: '80%' }}></div>
-            </div>
-          </div>
-        </div>
-
-        {/* Live GPS Map Box */}
-        <div className="bg-white rounded-2xl border border-[#c4c6cf]/80 overflow-hidden shadow-xs relative">
-          <div className="relative h-64 sm:h-72 w-full overflow-hidden bg-slate-100">
-            {/* Real Brooklyn Map visual */}
-            <img 
-              src={ASSET_IMAGES.brooklynMap} 
-              alt="Live Delivery Map"
-              className="w-full h-full object-cover"
-            />
-
-            {/* Simulated Live Route Path SVG Overlay */}
-            <svg className="absolute inset-0 w-full h-full pointer-events-none">
-              <path 
-                d="M 60 180 Q 140 120 200 130 T 320 80" 
-                fill="none" 
-                stroke="#006c49" 
-                strokeWidth="4" 
-                strokeDasharray="6,4"
-              />
-            </svg>
-
-            {/* Hub Origin Pin */}
-            <div className="absolute left-[50px] top-[165px] bg-[#001026] text-white p-1 rounded-full shadow-lg border border-white flex items-center gap-1 text-[10px] px-2">
-              <span className="material-symbols-outlined text-[14px] text-[#6cf8bb]">local_pharmacy</span>
-              <span className="font-bold">Hub #104</span>
-            </div>
-
-            {/* Courier Live Pin */}
-            <div className="absolute left-[190px] top-[115px] -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center">
-              <div className="w-8 h-8 rounded-full bg-[#006c49] text-white flex items-center justify-center shadow-xl border-2 border-white animate-bounce">
-                <span className="material-symbols-outlined text-[16px]">pedal_bike</span>
+      <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-4 flex-1">
+        {/* Web Split Grid Layout: Left Map & Route, Right Audit & Details */}
+        <div className="lg:grid lg:grid-cols-12 lg:gap-6 items-start">
+          {/* Left Column (7 cols on web) */}
+          <div className="lg:col-span-7 space-y-4">
+            {/* Dynamic Status Progress Card */}
+            <div className="bg-[#001026] text-white rounded-2xl p-4 sm:p-5 shadow-md space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#6cf8bb] animate-ping"></span>
+                  <span className="font-display font-bold text-base text-white">
+                    Arriving in 14 Mins
+                  </span>
+                </div>
+                <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#006c49] text-white">
+                  35-min Express
+                </span>
               </div>
-              <span className="mt-1 px-2 py-0.5 rounded-full bg-[#001026] text-white text-[9px] font-bold shadow-md whitespace-nowrap">
-                Miguel S. • 1.2 mi away
-              </span>
+
+              <div>
+                <div className="text-xs text-slate-300">Delivering to:</div>
+                <div className="font-bold text-white text-sm mt-0.5">{CURRENT_ORDER.deliveryAddress}</div>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="space-y-1.5 pt-1">
+                <div className="flex justify-between text-[11px] text-slate-300">
+                  <span>Dispatched from MetroCare Hub</span>
+                  <span className="font-bold text-[#6cf8bb]">Estimated: 09:06 AM</span>
+                </div>
+                <div className="w-full bg-white/20 h-2 rounded-full overflow-hidden">
+                  <div className="bg-[#6cf8bb] h-full rounded-full transition-all duration-500" style={{ width: '80%' }}></div>
+                </div>
+              </div>
             </div>
 
-            {/* Destination Pin */}
-            <div className="absolute right-[50px] top-[65px] bg-[#ba1a1a] text-white p-1 rounded-full shadow-lg border border-white flex items-center gap-1 text-[10px] px-2">
-              <span className="material-symbols-outlined text-[14px]">home</span>
-              <span className="font-bold">You</span>
+            {/* Live GPS Map Box */}
+            <div className="bg-white rounded-2xl border border-[#c4c6cf]/80 overflow-hidden shadow-xs relative">
+              <div className="relative h-64 sm:h-80 w-full overflow-hidden bg-slate-100">
+                {/* Real Brooklyn Map visual */}
+                <img 
+                  src={ASSET_IMAGES.brooklynMap} 
+                  alt="Live Delivery Map"
+                  className="w-full h-full object-cover"
+                />
+
+                {/* Simulated Live Route Path SVG Overlay */}
+                <svg className="absolute inset-0 w-full h-full pointer-events-none">
+                  <path 
+                    d="M 60 180 Q 140 120 200 130 T 320 80" 
+                    fill="none" 
+                    stroke="#006c49" 
+                    strokeWidth="4" 
+                    strokeDasharray="6,4"
+                  />
+                </svg>
+
+                {/* Hub Origin Pin */}
+                <div className="absolute left-[50px] top-[165px] bg-[#001026] text-white p-1 rounded-full shadow-lg border border-white flex items-center gap-1 text-[10px] px-2">
+                  <span className="material-symbols-outlined text-[14px] text-[#6cf8bb]">local_pharmacy</span>
+                  <span className="font-bold">Hub #104</span>
+                </div>
+
+                {/* Courier Live Pin */}
+                <div className="absolute left-[190px] top-[115px] -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center">
+                  <div className="w-8 h-8 rounded-full bg-[#006c49] text-white flex items-center justify-center shadow-xl border-2 border-white animate-bounce">
+                    <span className="material-symbols-outlined text-[16px]">pedal_bike</span>
+                  </div>
+                  <span className="mt-1 px-2 py-0.5 rounded-full bg-[#001026] text-white text-[9px] font-bold shadow-md whitespace-nowrap">
+                    Miguel S. • 1.2 mi away
+                  </span>
+                </div>
+
+                {/* Destination Pin */}
+                <div className="absolute right-[50px] top-[65px] bg-[#ba1a1a] text-white p-1 rounded-full shadow-lg border border-white flex items-center gap-1 text-[10px] px-2">
+                  <span className="material-symbols-outlined text-[14px]">home</span>
+                  <span className="font-bold">You</span>
+                </div>
+
+                {/* Floating Live Telemetry Badge */}
+                <div className="absolute top-3 left-3 bg-[#001026]/90 backdrop-blur-xs text-white px-3 py-1.5 rounded-xl border border-white/10 text-xs flex items-center gap-2 shadow-md">
+                  <span className="w-2 h-2 rounded-full bg-[#6cf8bb] animate-pulse"></span>
+                  <span className="text-[11px] font-mono">Live GPS Active</span>
+                  <span className="text-[11px] text-[#6ffbbe] font-mono">• 21°C Safe Cold-Chain</span>
+                </div>
+              </div>
+
+              {/* Courier Card & Secure Delivery PIN */}
+              <div className="p-4 bg-white border-t border-[#c4c6cf]/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-full bg-[#0b2545] text-[#6cf8bb] flex items-center justify-center font-bold text-sm">
+                    MS
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <h3 className="font-display font-bold text-[#001026] text-sm">{CURRENT_ORDER.courierName}</h3>
+                      <span className="text-[11px] text-[#006c49] font-bold">★ 4.9</span>
+                    </div>
+                    <p className="text-[11px] text-[#44474e]">{CURRENT_ORDER.courierVehicle}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <button 
+                        onClick={() => onShowToast('Calling courier Miguel S...')}
+                        className="text-[11px] text-[#001026] font-semibold flex items-center gap-0.5 hover:underline"
+                      >
+                        <span className="material-symbols-outlined text-[14px]">call</span> Call
+                      </button>
+                      <span className="text-slate-300">•</span>
+                      <button 
+                        onClick={() => onShowToast('Opening direct dispatch chat with Miguel')}
+                        className="text-[11px] text-[#001026] font-semibold flex items-center gap-0.5 hover:underline"
+                      >
+                        <span className="material-symbols-outlined text-[14px]">chat</span> Chat
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Handover Security PIN */}
+                <div className="p-2.5 rounded-xl bg-[#eff4ff] border border-[#c4c6cf]/80 text-right w-full sm:w-auto">
+                  <span className="text-[10px] font-bold text-[#44474e] uppercase tracking-wider block">
+                    Secure Delivery PIN
+                  </span>
+                  <div className="font-mono text-xl font-extrabold text-[#001026] tracking-widest flex items-center justify-end gap-1">
+                    <span className="material-symbols-outlined text-[16px] text-[#006c49]">lock</span>
+                    {CURRENT_ORDER.deliveryPin}
+                  </div>
+                  <span className="text-[9px] text-[#44474e]">Share with courier at doorstep</span>
+                </div>
+              </div>
             </div>
 
-            {/* Floating Live Telemetry Badge */}
-            <div className="absolute top-3 left-3 bg-[#001026]/90 backdrop-blur-xs text-white px-3 py-1.5 rounded-xl border border-white/10 text-xs flex items-center gap-2 shadow-md">
-              <span className="w-2 h-2 rounded-full bg-[#6cf8bb] animate-pulse"></span>
-              <span className="text-[11px] font-mono">Live GPS Active</span>
-              <span className="text-[11px] text-[#6ffbbe] font-mono">• 21°C Safe Cold-Chain</span>
+            {/* Prescription Fulfillment Audit Chain of Custody (5-step timeline) */}
+            <div className="bg-white rounded-2xl border border-[#c4c6cf]/80 p-4 sm:p-5 space-y-4 shadow-xs">
+              <div className="flex items-center justify-between">
+                <h3 className="font-display font-bold text-[#001026] text-sm sm:text-base flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[18px] text-[#006c49]">verified</span>
+                  Prescription Fulfillment Audit Trail
+                </h3>
+                <span className="text-[10px] font-mono px-2 py-0.5 bg-[#006c49]/15 text-[#006c49] font-bold rounded-full">
+                  CFR § 21 Logged
+                </span>
+              </div>
+
+              <div className="space-y-3 relative pl-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-[#c4c6cf]">
+                {/* Step 1 */}
+                <div className="relative">
+                  <div className="absolute -left-6 top-1 w-3.5 h-3.5 rounded-full bg-[#006c49] border-2 border-white"></div>
+                  <div className="text-xs font-bold text-[#001026]">Rx Verified &amp; Generic Substituted</div>
+                  <p className="text-[11px] text-[#44474e]">08:35 AM • Verified by Dr. Elena Rostova MD &amp; Lead RPh</p>
+                </div>
+
+                {/* Step 2 */}
+                <div className="relative">
+                  <div className="absolute -left-6 top-1 w-3.5 h-3.5 rounded-full bg-[#006c49] border-2 border-white"></div>
+                  <div className="text-xs font-bold text-[#001026]">Formulated &amp; Packed</div>
+                  <p className="text-[11px] text-[#44474e]">08:44 AM • MetroCare Central #4082 • Bin A-14 • Lot #CP-9021</p>
+                </div>
+
+                {/* Step 3 */}
+                <div className="relative">
+                  <div className="absolute -left-6 top-1 w-3.5 h-3.5 rounded-full bg-[#006c49] border-2 border-white"></div>
+                  <div className="text-xs font-bold text-[#001026]">Tamper-Evident Tape Applied</div>
+                  <p className="text-[11px] text-[#44474e]">
+                    08:49 AM • Security Seal ID: <strong className="font-mono text-[#001026]">{CURRENT_ORDER.tamperSealId}</strong>
+                  </p>
+                </div>
+
+                {/* Step 4 */}
+                <div className="relative">
+                  <div className="absolute -left-6 top-1 w-3.5 h-3.5 rounded-full bg-[#006c49] border-2 border-white"></div>
+                  <div className="text-xs font-bold text-[#001026]">Out for Express Delivery</div>
+                  <p className="text-[11px] text-[#44474e]">08:52 AM • Handed over to Miguel S. (E-Bike #14)</p>
+                </div>
+
+                {/* Step 5 */}
+                <div className="relative">
+                  <div className="absolute -left-6 top-1 w-3.5 h-3.5 rounded-full bg-[#6cf8bb] border-2 border-[#001026] animate-pulse"></div>
+                  <div className="text-xs font-bold text-[#006c49]">Doorstep Delivery Est. 09:06 AM</div>
+                  <p className="text-[11px] text-[#44474e]">En route to 742 Evergreen Terr • PIN Required</p>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Courier Card & Secure Delivery PIN */}
-          <div className="p-4 bg-white border-t border-[#c4c6cf]/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-full bg-[#0b2545] text-[#6cf8bb] flex items-center justify-center font-bold text-sm">
-                MS
+          {/* Right Column (5 cols on web - sticky) */}
+          <div className="lg:col-span-5 space-y-4 lg:sticky lg:top-16">
+            {/* Prescribed Medicine & Bio-Equivalence Summary Card */}
+            <div className="bg-white rounded-2xl border border-[#c4c6cf]/80 p-4 sm:p-5 space-y-3 shadow-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#006c49]">Dispensed Medication</span>
+                <span className="text-[11px] font-bold text-[#006c49] bg-[#006c49]/15 px-2 py-0.5 rounded">
+                  Saved $84.30 (85.6%)
+                </span>
+              </div>
+
+              <div className="flex items-start justify-between">
+                <div>
+                  <h4 className="font-display font-bold text-[#001026] text-base">{CURRENT_ORDER.genericSubstitute}</h4>
+                  <p className="text-xs text-[#44474e]">Bio-Equivalent to prescribed {CURRENT_ORDER.brandPrescribed}</p>
+                  <div className="mt-1 text-xs text-[#001026]">
+                    Sig: 1 tablet orally once daily at bedtime (qHS) • Dispense #30
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs line-through text-[#74777f]">${CURRENT_ORDER.priceBrand.toFixed(2)}</span>
+                  <div className="text-lg font-display font-extrabold text-[#006c49]">${CURRENT_ORDER.priceGeneric.toFixed(2)}</div>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-[#c4c6cf]/50 flex flex-wrap items-center justify-between gap-2 text-xs">
+                <div className="flex items-center gap-1.5 text-[#44474e]">
+                  <span className="material-symbols-outlined text-[16px] text-[#006c49]">security</span>
+                  <span>Tamper-Proof Hologram Armed</span>
+                </div>
+                <button 
+                  onClick={() => setShowQrModal(true)}
+                  className="text-[#001026] font-bold underline hover:text-[#006c49]"
+                >
+                  Verify Tamper Seal QR
+                </button>
+              </div>
+            </div>
+
+            {/* Dispensing Pharmacy & Pharmacist Signoff */}
+            <div className="bg-white rounded-2xl border border-[#c4c6cf]/80 p-4 space-y-3 shadow-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#006c49]">Dispensing Pharmacy</span>
+                <span className="text-[10px] font-mono bg-[#eff4ff] text-[#001026] px-2 py-0.5 rounded font-bold">
+                  LIC #GDL-99201
+                </span>
               </div>
               <div>
-                <div className="flex items-center gap-1.5">
-                  <h3 className="font-display font-bold text-[#001026] text-sm">{CURRENT_ORDER.courierName}</h3>
-                  <span className="text-[11px] text-[#006c49] font-bold">★ 4.9</span>
+                <h4 className="font-display font-bold text-[#001026] text-sm">MetroCare Rx Downtown Hub</h4>
+                <p className="text-xs text-[#44474e]">104 Court St, Brooklyn, NY 11201 • (718) 555-0192</p>
+              </div>
+              <div className="p-2.5 rounded-xl bg-[#eff4ff] text-xs space-y-1">
+                <div className="flex justify-between font-semibold text-[#001026]">
+                  <span>Lead Pharmacist:</span>
+                  <span>Dr. Marcus Vance, PharmD</span>
                 </div>
-                <p className="text-[11px] text-[#44474e]">{CURRENT_ORDER.courierVehicle}</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <button 
-                    onClick={() => onShowToast('Calling courier Miguel S...')}
-                    className="text-[11px] text-[#001026] font-semibold flex items-center gap-0.5 hover:underline"
-                  >
-                    <span className="material-symbols-outlined text-[14px]">call</span> Call
-                  </button>
-                  <span className="text-slate-300">•</span>
-                  <button 
-                    onClick={() => onShowToast('Opening direct dispatch chat with Miguel')}
-                    className="text-[11px] text-[#001026] font-semibold flex items-center gap-0.5 hover:underline"
-                  >
-                    <span className="material-symbols-outlined text-[14px]">chat</span> Chat
-                  </button>
+                <div className="flex justify-between text-[11px] text-[#44474e]">
+                  <span>FDA Equivalence Rating:</span>
+                  <span className="font-mono text-[#006c49] font-bold">AB Certified</span>
                 </div>
               </div>
             </div>
 
-            {/* Handover Security PIN */}
-            <div className="p-2.5 rounded-xl bg-[#eff4ff] border border-[#c4c6cf]/80 text-right w-full sm:w-auto">
-              <span className="text-[10px] font-bold text-[#44474e] uppercase tracking-wider block">
-                Secure Delivery PIN
-              </span>
-              <div className="font-mono text-xl font-extrabold text-[#001026] tracking-widest flex items-center justify-end gap-1">
-                <span className="material-symbols-outlined text-[16px] text-[#006c49]">lock</span>
-                {CURRENT_ORDER.deliveryPin}
-              </div>
-              <span className="text-[9px] text-[#44474e]">Share with courier at doorstep</span>
+            {/* Actions Footer */}
+            <div className="flex items-center gap-3 pt-1">
+              <button
+                onClick={() => setShowConsultModal(true)}
+                className="flex-1 py-2.5 rounded-xl border border-[#c4c6cf] bg-white text-[#001026] hover:bg-[#eff4ff] font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px]">support_agent</span>
+                Consult Pharmacist
+              </button>
+
+              <button
+                onClick={() => onNavigateScreen('customer-app')}
+                className="flex-1 py-2.5 rounded-xl bg-[#001026] hover:bg-[#0b2545] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px]">shopping_bag</span>
+                Browse Catalog
+              </button>
             </div>
           </div>
-        </div>
-
-        {/* Prescription Fulfillment Audit Chain of Custody (5-step timeline) */}
-        <div className="bg-white rounded-2xl border border-[#c4c6cf]/80 p-4 sm:p-5 space-y-4 shadow-xs">
-          <div className="flex items-center justify-between">
-            <h3 className="font-display font-bold text-[#001026] text-sm sm:text-base flex items-center gap-2">
-              <span className="material-symbols-outlined text-[18px] text-[#006c49]">verified</span>
-              Prescription Fulfillment Audit Trail
-            </h3>
-            <span className="text-[10px] font-mono px-2 py-0.5 bg-[#006c49]/15 text-[#006c49] font-bold rounded-full">
-              CFR § 21 Logged
-            </span>
-          </div>
-
-          <div className="space-y-3 relative pl-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-[#c4c6cf]">
-            {/* Step 1 */}
-            <div className="relative">
-              <div className="absolute -left-6 top-1 w-3.5 h-3.5 rounded-full bg-[#006c49] border-2 border-white"></div>
-              <div className="text-xs font-bold text-[#001026]">Rx Verified &amp; Generic Substituted</div>
-              <p className="text-[11px] text-[#44474e]">08:35 AM • Verified by Dr. Elena Rostova MD &amp; Lead RPh</p>
-            </div>
-
-            {/* Step 2 */}
-            <div className="relative">
-              <div className="absolute -left-6 top-1 w-3.5 h-3.5 rounded-full bg-[#006c49] border-2 border-white"></div>
-              <div className="text-xs font-bold text-[#001026]">Formulated &amp; Packed</div>
-              <p className="text-[11px] text-[#44474e]">08:44 AM • MetroCare Central #4082 • Bin A-14 • Lot #CP-9021</p>
-            </div>
-
-            {/* Step 3 */}
-            <div className="relative">
-              <div className="absolute -left-6 top-1 w-3.5 h-3.5 rounded-full bg-[#006c49] border-2 border-white"></div>
-              <div className="text-xs font-bold text-[#001026]">Tamper-Evident Tape Applied</div>
-              <p className="text-[11px] text-[#44474e]">
-                08:49 AM • Security Seal ID: <strong className="font-mono text-[#001026]">{CURRENT_ORDER.tamperSealId}</strong>
-              </p>
-            </div>
-
-            {/* Step 4 */}
-            <div className="relative">
-              <div className="absolute -left-6 top-1 w-3.5 h-3.5 rounded-full bg-[#006c49] border-2 border-white"></div>
-              <div className="text-xs font-bold text-[#001026]">Out for Express Delivery</div>
-              <p className="text-[11px] text-[#44474e]">08:52 AM • Handed over to Miguel S. (E-Bike #14)</p>
-            </div>
-
-            {/* Step 5 */}
-            <div className="relative">
-              <div className="absolute -left-6 top-1 w-3.5 h-3.5 rounded-full bg-[#6cf8bb] border-2 border-[#001026] animate-pulse"></div>
-              <div className="text-xs font-bold text-[#006c49]">Doorstep Delivery Est. 09:06 AM</div>
-              <p className="text-[11px] text-[#44474e]">En route to 742 Evergreen Terr • PIN Required</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Prescribed Medicine & Bio-Equivalence Summary Card */}
-        <div className="bg-white rounded-2xl border border-[#c4c6cf]/80 p-4 sm:p-5 space-y-3 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#006c49]">Dispensed Medication</span>
-            <span className="text-[11px] font-bold text-[#006c49] bg-[#006c49]/15 px-2 py-0.5 rounded">
-              Saved $84.30 (85.6%)
-            </span>
-          </div>
-
-          <div className="flex items-start justify-between">
-            <div>
-              <h4 className="font-display font-bold text-[#001026] text-base">{CURRENT_ORDER.genericSubstitute}</h4>
-              <p className="text-xs text-[#44474e]">Bio-Equivalent to prescribed {CURRENT_ORDER.brandPrescribed}</p>
-              <div className="mt-1 text-xs text-[#001026]">
-                Sig: 1 tablet orally once daily at bedtime (qHS) • Dispense #30
-              </div>
-            </div>
-            <div className="text-right">
-              <span className="text-xs line-through text-[#74777f]">${CURRENT_ORDER.priceBrand.toFixed(2)}</span>
-              <div className="text-lg font-display font-extrabold text-[#006c49]">${CURRENT_ORDER.priceGeneric.toFixed(2)}</div>
-            </div>
-          </div>
-
-          <div className="pt-2 border-t border-[#c4c6cf]/50 flex flex-wrap items-center justify-between gap-2 text-xs">
-            <div className="flex items-center gap-1.5 text-[#44474e]">
-              <span className="material-symbols-outlined text-[16px] text-[#006c49]">security</span>
-              <span>Tamper-Proof Hologram Armed</span>
-            </div>
-            <button 
-              onClick={() => setShowQrModal(true)}
-              className="text-[#001026] font-bold underline hover:text-[#006c49]"
-            >
-              Verify Tamper Seal QR
-            </button>
-          </div>
-        </div>
-
-        {/* Actions Footer */}
-        <div className="flex items-center gap-3 pt-2">
-          <button
-            onClick={() => setShowConsultModal(true)}
-            className="flex-1 py-2.5 rounded-xl border border-[#c4c6cf] bg-white text-[#001026] hover:bg-[#eff4ff] font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-colors"
-          >
-            <span className="material-symbols-outlined text-[18px]">support_agent</span>
-            Consult Pharmacist
-          </button>
-
-          <button
-            onClick={() => onNavigateScreen('customer-app')}
-            className="flex-1 py-2.5 rounded-xl bg-[#001026] hover:bg-[#0b2545] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-colors"
-          >
-            <span className="material-symbols-outlined text-[18px]">shopping_bag</span>
-            Browse Medicines
-          </button>
         </div>
       </main>
 
