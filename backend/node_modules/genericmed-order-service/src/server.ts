@@ -6,9 +6,48 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import crypto from 'crypto';
+import dotenv from 'dotenv';
+import path from 'path';
+import { Db, MongoClient } from 'mongodb';
+
+dotenv.config({ path: path.resolve(__dirname, '../../../../.env') });
 
 const app = express();
 const PORT = process.env.PORT || 8003;
+
+let mongoClient: MongoClient | null = null;
+let mongoDatabase: Db | null = null;
+let mongoStatus: 'disabled' | 'connecting' | 'connected' | 'unavailable' = 'disabled';
+
+async function connectMongo(): Promise<void> {
+  const connectionString = process.env.MONGODB_URI?.trim();
+  if (!connectionString) return;
+
+  mongoStatus = 'connecting';
+  try {
+    mongoClient = new MongoClient(connectionString, { serverSelectionTimeoutMS: 8000 });
+    await mongoClient.connect();
+    mongoDatabase = mongoClient.db();
+    await mongoDatabase.command({ ping: 1 });
+    mongoStatus = 'connected';
+    console.log('[Order Service] MongoDB connection established.');
+  } catch (_error) {
+    mongoStatus = 'unavailable';
+    await mongoClient?.close().catch(() => undefined);
+    mongoClient = null;
+    mongoDatabase = null;
+    console.warn('[Order Service] MongoDB is unavailable; retaining in-memory development fallback.');
+  }
+}
+
+async function persistOperationalRecord(collection: string, record: Record<string, unknown>): Promise<void> {
+  if (!mongoDatabase) return;
+  try {
+    await mongoDatabase.collection(collection).insertOne({ ...record, recordedAt: new Date() });
+  } catch (_error) {
+    console.warn(`[Order Service] MongoDB write to ${collection} failed; request remains available.`);
+  }
+}
 
 app.use(cors());
 app.use(express.json());
@@ -127,6 +166,7 @@ app.get('/health', (_req: Request, res: Response) => {
     service: 'genericmed-order-service',
     version: '1.2.0',
     activeOrders: ordersDb.size / 2,
+    mongo: mongoStatus,
     timestamp: new Date().toISOString()
   });
 });
@@ -321,7 +361,9 @@ app.post('/api/v1/wholesale/purchase-orders', (req: Request, res: Response) => {
   wholesaleInventory.set(batchNumber, availableUnits - quantityUnits);
   const poNumber = `PO-GM-${Date.now().toString().slice(-8)}`;
   const signatureHash = crypto.createHash('sha256').update(`${poNumber}|${batchNumber}|${quantityUnits}|${signerLicenseNumber}|${cgmpToken}`).digest('hex');
-  return res.status(201).json({ poNumber, status: 'allocated_pending_quality_release', batchNumber, quantityUnits, tier, unitPriceCents, contractValueCents: quantityUnits * unitPriceCents, availableUnitsAfterAllocation: availableUnits - quantityUnits, signatureHash: `GM-PO-${signatureHash.slice(0, 20).toUpperCase()}` });
+  const result = { poNumber, status: 'allocated_pending_quality_release', batchNumber, quantityUnits, tier, unitPriceCents, contractValueCents: quantityUnits * unitPriceCents, availableUnitsAfterAllocation: availableUnits - quantityUnits, signatureHash: `GM-PO-${signatureHash.slice(0, 20).toUpperCase()}` };
+  void persistOperationalRecord('wholesale_purchase_orders', result);
+  return res.status(201).json(result);
 });
 
 app.post('/api/v1/cold-chain/telemetry', (req: Request, res: Response) => {
@@ -336,6 +378,7 @@ app.post('/api/v1/cold-chain/telemetry', (req: Request, res: Response) => {
   const excursion = temperatureC < 2 || temperatureC > 8;
   if (excursion) shipment.status = 'quarantined';
   coldChainShipments.set(shipmentReference, shipment);
+  void persistOperationalRecord('cold_chain_telemetry', { shipmentReference, batchNumber, deviceId, temperatureC, humidityPercent: typeof humidityPercent === 'number' ? humidityPercent : null, recordedAt: timestamp, status: shipment.status });
   return res.status(201).json({ shipmentReference, status: shipment.status, temperatureC, withinRange: !excursion, alert: excursion ? `QUARANTINE REQUIRED: ${temperatureC.toFixed(1)}°C is outside the 2–8°C range.` : null });
 });
 
@@ -345,6 +388,15 @@ app.get('/api/v1/cold-chain/shipments/:shipmentReference', (req: Request, res: R
   return res.json(shipment);
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`[Order Service] Node.js / Express listening on port ${PORT}...`);
+  void connectMongo();
 });
+
+async function closeService(): Promise<void> {
+  await mongoClient?.close().catch(() => undefined);
+  server.close();
+}
+
+process.once('SIGINT', () => { void closeService(); });
+process.once('SIGTERM', () => { void closeService(); });

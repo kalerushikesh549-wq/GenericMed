@@ -8,7 +8,7 @@ frontend/                 React 19 + Vite application
   public/                 static frontend assets
   .env                    browser-safe Vite configuration
 
-backend/                  Dockerized Go, Python, and Node.js microservices
+backend/                  Node.js order service and supporting backend source
   src/db/                 PostgreSQL schema, RLS, and phase migrations
   src/gateway/            Nginx API gateway configuration
   src/services/           catalog, OCR, order, FDA sync services
@@ -18,7 +18,6 @@ backend/                  Dockerized Go, Python, and Node.js microservices
 ## Prerequisites
 
 - Node.js 20+ and npm
-- Docker Desktop with Docker Compose, for the full backend stack
 
 ## Install frontend dependencies
 
@@ -29,7 +28,7 @@ npm install
 
 ## Install backend dependencies
 
-The Node.js order service has its own dependency manifest. The Go catalog and Python OCR/FDA services install their dependencies inside their Docker images.
+The Node.js order service has its own dependency manifest.
 
 ```powershell
 cd backend/src/services/order
@@ -43,20 +42,20 @@ cd frontend
 npm run dev
 ```
 
-The frontend runs at `http://localhost:3000`. Its API client reads `VITE_API_GATEWAY_URL` from `frontend/.env` and calls the backend gateway at `http://localhost:8000`. It retains mock-data fallbacks when the backend is offline.
+The frontend runs at `http://localhost:3000`. Its API client reads `VITE_API_GATEWAY_URL` from `frontend/.env`. It retains mock-data fallbacks when the backend is offline.
 
 ## Start the backend
 
-For the full API, database, Redis, and microservice stack:
+To run the deployable Node.js order service:
 
 ```powershell
 cd backend
 npm run start
 ```
 
-The Nginx API gateway is available at `http://localhost:8000`. Configuration is in `backend/.env`; do not place backend secrets in `frontend/.env`.
+It listens on `http://localhost:8003`. Configuration is in `backend/.env`; do not place backend secrets in `frontend/.env`.
 
-For only the Node.js order service during backend development:
+For development with automatic restarts:
 
 ```powershell
 cd backend
@@ -65,7 +64,7 @@ npm run dev
 
 It listens on `http://localhost:8003`.
 
-## Run both together
+## Run the frontend and order service together
 
 Open two terminals:
 
@@ -79,7 +78,7 @@ cd frontend
 npm run dev
 ```
 
-Then open `http://localhost:3000`. The browser reaches backend APIs exclusively through HTTP; the frontend has no imports from the backend source tree.
+Set `VITE_API_GATEWAY_URL` to `http://localhost:8003` in `frontend/.env`, then open `http://localhost:3000`. The browser reaches backend APIs exclusively through HTTP; the frontend has no imports from the backend source tree.
 
 ## Verification
 
@@ -91,4 +90,4 @@ cd ../backend
 npm run build
 ```
 
-With the backend running, verify the gateway through `http://localhost:8000/health` and then use the frontend’s medicine, prescription, order, payment, insurance, wholesale, and cold-chain flows.
+With the backend running, verify the order service through `http://localhost:8003/health` and then use the order, payment, insurance, wholesale, and cold-chain flows.

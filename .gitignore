@@ -1,5 +1,7 @@
 # Environment files contain deployment-specific values.
+frontend/.env
 frontend/.env.local
+backend/.env
 backend/.env.local
 
 # Dependency and generated output directories.
@@ -8,6 +10,7 @@ frontend/dist/
 frontend/.vite/
 backend/src/services/order/node_modules/
 backend/src/services/order/dist/
+backend/node_modules/
 backend/src/services/ocr/__pycache__/
 backend/src/services/fda-sync/__pycache__/
 

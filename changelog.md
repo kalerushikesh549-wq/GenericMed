@@ -3,6 +3,7 @@
 ## [1.8.0] - 2026-09-09
 
 ### Changed
+- **Docker-free deployment**: Removed Docker Compose and service Dockerfiles. `backend/npm start` now runs the Node.js order service directly, which is compatible with Render's Node runtime.
 - **Repository separation**: Moved the React/Vite application, its configuration, dependencies, generated assets, and browser environment configuration to `frontend/`.
 - Moved backend database migrations, gateway configuration, and all microservices to `backend/src/`; added an independent backend package manifest and Compose path updates.
 - Added root `README.md`, `.gitignore`, and separate `frontend/.env` and `backend/.env` files. The frontend communicates with services via the configured HTTP API gateway only.
