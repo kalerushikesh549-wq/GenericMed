@@ -207,7 +207,7 @@ gantt
 
 ## Phase 5: Payment Gateways & Insurance EDI Adjudication
 
-- **Status**: `PLANNED`
+- **Status**: `IN PROGRESS`
 - **Timeline**: May 2027 – July 2027
 - **Focus**: Consumer checkout, multi-tenant merchant payouts, and real-time insurance co-pay comparison.
 
@@ -218,16 +218,16 @@ gantt
 
 ### Key Deliverables & Milestones
 - [ ] **Stripe Custom Connect Integration**:
-  - [ ] Stripe Elements checkout supporting FSA/HSA card eligibility verification.
-  - [ ] Automated multi-tenant payment routing with platform take-rate deduction (8.5%) and instant hub disbursement.
+  - [x] Token-only payment intent boundary supporting card, Apple Pay, Google Pay, and HSA/FSA payment-method types.
+  - [x] Deterministic multi-tenant settlement split calculation with 8.5% platform fee, hub payout, and courier payout.
 - [ ] **Real-Time Insurance Adjudication Engine**:
   - [ ] Integration with healthcare clearinghouses (Change Healthcare / Surescripts) via EDI 837 (claim submission) and EDI 835 (payment/remittance).
-  - [ ] Real-time UI badge comparing:
+  - [x] Estimate UI badge comparing:
     - Originator Brand Insurance Co-pay (e.g. $45.00)
     - GenericMed Direct Cash Price (e.g. $14.20)
     - Patient Net Savings (e.g. $30.80)
 - [ ] **Patient Prescription Refill Subscriptions**:
-  - [ ] Recurring 30-day / 90-day maintenance drug refill auto-billing and scheduled dispatch.
+  - [x] 30-day / 90-day subscription contract endpoint; recurring billing/dispatch remains gated on live payment approval.
 
 ### Dependencies & Prerequisites
 - Healthcare clearinghouse partnership agreements and API access.
@@ -242,7 +242,7 @@ gantt
 
 ## Phase 6: Nationwide B2B Wholesale Marketplace & Cold-Chain IoT
 
-- **Status**: `PLANNED`
+- **Status**: `IN PROGRESS`
 - **Timeline**: July 2027 – October 2027
 - **Focus**: B2B manufacturing exchange, bulk purchase orders, and cold-chain IoT tracking for temperature-sensitive biologics.
 
@@ -253,12 +253,12 @@ gantt
 
 ### Key Deliverables & Milestones
 - [ ] **B2B Wholesale Exchange**:
-  - [ ] Wholesale catalog with real-time manufacturing plant reactor yield and bulk availability.
-  - [ ] Multi-tiered pricing matrices based on monthly order volumes (Tier 1, Tier 2, Bulk Depot Tier 3).
-  - [ ] Digital Purchase Order (PO) sign-off with cGMP quality assurance tokens.
+  - [x] Released-batch allocation API with available inventory protection and portal PO flow.
+  - [x] Tier 1, Tier 2, and Tier 3 pricing calculation based on purchase quantity.
+  - [x] Digital PO signature hash tied to signer license and cGMP token.
 - [ ] **Cold-Chain IoT Sensor Ingestion**:
-  - [ ] Ingest real-time temperature and humidity telemetry from BLE/Cellular loggers placed inside pallet shippers.
-  - [ ] Automated quarantine alerts if temperature exceeds 2°C – 8°C excursion limits during transit.
+  - [x] Telemetry ingestion contract for BLE/Cellular logger readings and shipment identity checks.
+  - [x] Server-side 2°C–8°C excursion protection that automatically quarantines a shipment.
 - [ ] **Autonomous Drone Delivery Pod Pilot**:
   - [ ] Exploration of autonomous drone dispatch for remote / rural community pharmacy hubs.
 

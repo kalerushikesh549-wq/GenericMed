@@ -1,0 +1,15 @@
+{
+  "name": "genericmed-backend",
+  "version": "1.7.0",
+  "private": true,
+  "scripts": {
+    "build": "npm --prefix src/services/order run build",
+    "dev": "npm --prefix src/services/order run dev",
+    "start": "docker compose up --build",
+    "stop": "docker compose down",
+    "start:compliance-jobs": "docker compose --profile compliance-jobs up --build"
+  },
+  "workspaces": [
+    "src/services/order"
+  ]
+}

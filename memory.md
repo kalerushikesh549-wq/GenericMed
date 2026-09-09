@@ -26,6 +26,10 @@ This document serves as the **authoritative, persistent institutional memory** f
 
 ## 2. Technology Stack
 
+### Repository Layout (v1.8.0)
+- `frontend/` is the standalone React/Vite browser application. Its API client reads `VITE_API_GATEWAY_URL` from `frontend/.env`; it contains no backend source imports.
+- `backend/` is the standalone service workspace. PostgreSQL migrations, Nginx gateway configuration, and Go/Python/Node microservices live under `backend/src/`; `backend/package.json` provides service build/start scripts and `backend/.env` contains server-only variables.
+
 ```
                                   [ Users & Clients ]
                   (Patients • Pharmacists • Manufacturers • Enterprise Admins)
@@ -70,9 +74,18 @@ This document serves as the **authoritative, persistent institutional memory** f
 ## 3. Features Completed (Current State)
 
 ### Phase 4 Foundations (In Progress - v1.5.0)
-- `backend/services/fda-sync/` contains the FDA Orange Book ingestion worker. It validates the official ZIP structure, normalizes Products/Patent/Exclusivity data, calculates deterministic snapshot diffs, and conditionally upserts into PostgreSQL when `DATABASE_URL` is supplied.
-- `backend/db/04_phase4_compliance.sql` adds `fda_sync_runs` and `fda_orange_book_products`, plus an append-only, per-ledger-scope SHA-256 audit chain. Database triggers reject audit record updates and deletes.
+- `backend/src/services/fda-sync/` contains the FDA Orange Book ingestion worker. It validates the official ZIP structure, normalizes Products/Patent/Exclusivity data, calculates deterministic snapshot diffs, and conditionally upserts into PostgreSQL when `DATABASE_URL` is supplied.
+- `backend/src/db/04_phase4_compliance.sql` adds `fda_sync_runs` and `fda_orange_book_products`, plus an append-only, per-ledger-scope SHA-256 audit chain. Database triggers reject audit record updates and deletes.
 - The OCR verification endpoint signs `prescription_id | pharmacist_license | UTC timestamp` with SHA-256 and records minimal decision metadata; it does not include patient identifiers in audit details.
+
+### Phase 5 Foundations (In Progress - v1.6.0)
+- Payment endpoints in the order service accept only tokenized `pm_` payment-method IDs and calculate an 8.5% platform fee with explicit hub and courier allocations. Default `PAYMENTS_MODE=demo` performs no external charge.
+- Insurance quotes are estimates by default and are clearly labeled in the customer catalog. `CLEARINGHOUSE_MODE=live` is configuration-gated pending a contracted clearinghouse integration; no raw EDI payload or member identifier is stored.
+- `backend/src/db/05_phase5_payments.sql` adds payment transactions, settlements, insurance quotes, and 30/90-day refill subscription records.
+
+### Phase 6 Foundations (In Progress - v1.7.0)
+- `POST /api/v1/wholesale/purchase-orders` reserves in-memory released batch inventory, selects a purchase tier (1k+, 5k+, or 20k+ units), and emits a SHA-256-derived PO signature reference bound to the signer license and cGMP token. Production persistence is represented by `backend/src/db/06_phase6_marketplace_iot.sql`.
+- `POST /api/v1/cold-chain/telemetry` validates shipment/device identity and puts the shipment in `quarantined` state for any temperature below 2°C or above 8°C. The manufacturer portal retains demo fallback behavior when services are unavailable.
 
 The project currently contains **8 fully integrated production-ready interactive screens** and unified navigation infrastructure:
 

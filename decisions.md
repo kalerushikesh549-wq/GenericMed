@@ -20,6 +20,9 @@ This document captures all high-impact technical, architectural, and product dec
 | **[ADR-007](#adr-007-global-keyboard-first-command-palette-k-navigation)** | Global Keyboard-First Command Palette (`⌘K`) Navigation | `Accepted` | 2026-06-12 | Usability & Workflow Speed |
 | **[ADR-008](#adr-008-zero-trust-edge-security-and-hipaa--21-cfr-part-11-compliance)** | Zero-Trust Edge Security and HIPAA / 21 CFR Part 11 Compliance | `Accepted` | 2026-07-01 | Governance & Compliance |
 | **[ADR-009](#adr-009-fda-ingestion-and-append-only-clinical-ledger)** | FDA Ingestion and Append-Only Clinical Ledger | `Accepted` | 2026-09-09 | Regulatory Compliance |
+| **[ADR-010](#adr-010-token-only-payments-and-credential-gated-adjudication)** | Token-Only Payments and Credential-Gated Adjudication | `Accepted` | 2026-09-09 | Payments & Insurance |
+| **[ADR-011](#adr-011-server-enforced-cold-chain-quarantine)** | Server-Enforced Cold-Chain Quarantine | `Accepted` | 2026-09-09 | Wholesale & IoT |
+| **[ADR-012](#adr-012-frontend--backend-workspace-separation)** | Frontend & Backend Workspace Separation | `Accepted` | 2026-09-09 | Repository Architecture |
 
 ---
 
@@ -309,3 +312,60 @@ Use the FDA Orange Book ZIP as the source ingestion contract and store normalize
 - The scheduler must run the worker with `DATABASE_URL`; local runs remain side-effect-free without it.
 - Audit entries must be inserted complete because corrective actions are represented by a new compensating record rather than a mutation.
 - HIPAA certification, KMS envelope encryption, BAA execution, Elasticsearch alias swaps, and third-party audit remain open Phase 4 work.
+
+---
+
+### ADR-010: Token-Only Payments and Credential-Gated Adjudication
+
+- **Decision Title**: Token-Only Payments and Credential-Gated Adjudication
+- **Date**: 2026-09-09
+- **Status**: `Accepted`
+
+#### Context / Problem
+Payment and insurance workflows must be demonstrable before GenericMed has Stripe Connect approval or clearinghouse contracts. Simulated cards or uncontracted live claims would create unacceptable PCI and HIPAA risk.
+
+#### Decision Taken
+Expose a token-only payment boundary that accepts provider payment-method identifiers, never PAN or CVV, and calculates the platform, hub, and courier settlement amounts deterministically. Default to demo mode with no external charge. Return insurance values as explicitly labeled estimates until a contracted clearinghouse adapter is configured; do not persist raw EDI or member identifiers.
+
+#### Consequences
+- Stripe Elements/Connect onboarding and clearinghouse 837/835 exchange remain production integration tasks that require credentials, partnership agreements, and compliance review.
+- The customer app can safely show transparent cash-versus-coverage comparisons without representing estimates as benefit determinations.
+- Refill subscriptions can be created only from an authorized tokenized payment intent and require a scheduled production worker before automatic charging or dispatch.
+
+---
+
+### ADR-011: Server-Enforced Cold-Chain Quarantine
+
+- **Decision Title**: Server-Enforced Cold-Chain Quarantine
+- **Date**: 2026-09-09
+- **Status**: `Accepted`
+
+#### Context / Problem
+Temperature-sensitive shipments cannot rely on a client-side warning to preserve their integrity. A delayed, malformed, or out-of-range reading must never permit delivery acceptance without QA review.
+
+#### Decision Taken
+Accept only identified shipment/device telemetry pairs and evaluate the 2°C–8°C rule at ingestion. Any out-of-range temperature changes the server-side shipment state to `quarantined` and returns an actionable alert. Wholesale allocation verifies available released inventory and creates a cryptographic PO signature reference using the signer license and cGMP quality token.
+
+#### Consequences
+- A later in-range reading cannot remove quarantine; a separate QA release workflow is required.
+- Hardware connectivity is simulated locally, while the API contract supports BLE and cellular sources without embedding a specific vendor SDK.
+- The drone delivery pilot remains exploratory and has not been implemented because aviation authorization and safety requirements are external prerequisites.
+
+---
+
+### ADR-012: Frontend & Backend Workspace Separation
+
+- **Decision Title**: Frontend & Backend Workspace Separation
+- **Date**: 2026-09-09
+- **Status**: `Accepted`
+
+#### Context / Problem
+The browser application and server infrastructure shared the repository root, making dependency ownership, environment scope, and startup instructions ambiguous.
+
+#### Decision Taken
+Place the React/Vite application in `frontend/` and all API, database, gateway, and service code in `backend/src/`. Each side has its own package manifest and `.env` file. Browser code reaches the backend only using the configured API gateway URL; backend service source is never imported into the frontend.
+
+#### Consequences
+- Frontend dependencies are installed and built from `frontend/`; Node backend-service dependencies are installed and built from `backend/src/services/order/`, with backend scripts exposed through `backend/package.json`.
+- Docker Compose uses paths relative to `backend/`, so migration, gateway, and service build contexts now begin with `./src/`.
+- Docker Desktop is required to start the complete Go, Python, Node, PostgreSQL, Redis, and Nginx backend stack locally.

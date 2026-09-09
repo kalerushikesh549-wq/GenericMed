@@ -22,7 +22,7 @@ This document defines the strict engineering, design, security, and operational 
   6. `manufacturer-portal` (Manufacturer cGMP Portal)
   7. `system-architecture` (System Architecture & Service Bus Visualizer)
   8. `auth` (Multi-Role Authentication & Profile)
-- **Do Not Discard Mock Data**: Existing data structures in `src/data/mockData.ts` (e.g., `MEDICINES`, `CURRENT_ORDER`, `PHARMACY_HUBS`, `BATCH_DOSSIER`, `WHOLESALE_ORDERS`, `DEMO_USERS`) are canonical references for UI states and demonstrations. Any new schema fields must be additive or optional.
+- **Do Not Discard Mock Data**: Existing data structures in `frontend/src/data/mockData.ts` (e.g., `MEDICINES`, `CURRENT_ORDER`, `PHARMACY_HUBS`, `BATCH_DOSSIER`, `WHOLESALE_ORDERS`, `DEMO_USERS`) are canonical references for UI states and demonstrations. Any new schema fields must be additive or optional.
 - **Preserve User Interactions**: Ensure device frame toggling, global `⌘K` command search, and toast alerts remain fully functional after every change.
 
 ---
@@ -31,7 +31,7 @@ This document defines the strict engineering, design, security, and operational 
 
 ### 2.1 TypeScript Strictness & Type Safety
 - **No Implicit `any`**: Explicitly declare types for all component props, function parameters, and return types.
-- **Single Source of Truth for Types**: All shared domain types must live in `src/types.ts`. Do not declare duplicate ad-hoc types across component files.
+- **Single Source of Truth for Types**: All shared frontend domain types must live in `frontend/src/types.ts`. Do not declare duplicate ad-hoc types across component files.
 - **Discriminated Unions for States**: Use strict union types for status fields (e.g., `status: 'pending_review' | 'verified' | 'packed' | 'out_for_delivery' | 'delivered'`).
 - **Immutable State Updates**: Never mutate React state directly. Use functional state updates or spread operators (`[...prev, newItem]`, `{ ...prev, key: value }`).
 
@@ -75,11 +75,12 @@ GenericMed/
 ├── memory.md                  # Project memory, database schemas, endpoints, and roadmap
 ├── phases.md                  # Implementation roadmap, engineering phases, and milestones
 ├── changelog.md               # Chronological version change log
-├── index.html                 # HTML5 entrypoint with Google Fonts & Material Symbols
-├── metadata.json              # Workspace metadata and capabilities descriptor
-├── package-lock.json          # Dependency lockfile
-├── src/
-│   ├── main.tsx               # React application DOM mount entrypoint
+├── frontend/                  # React/Vite browser application
+│   ├── index.html             # HTML5 entrypoint with Google Fonts & Material Symbols
+│   ├── package.json           # Frontend dependency manifest
+│   ├── public/                # Static browser assets
+│   └── src/
+│       ├── main.tsx           # React application DOM mount entrypoint
 │   ├── App.tsx                # Universal screen router, global modal, & toast manager
 │   ├── index.css              # Tailwind CSS directives, typography tokens, & animations
 │   ├── types.ts               # Canonical TypeScript domain interfaces and type unions
@@ -103,11 +104,11 @@ GenericMed/
 ```
 
 ### Rules for Placing New Files
-1. **New Screen**: Must be placed in `src/components/screens/<ScreenName>Screen.tsx` and registered in `src/types.ts` under `ScreenId` and `src/App.tsx`.
-2. **Reusable UI Component**: Must be placed in `src/components/common/<ComponentName>.tsx`.
-3. **Domain Types & Interfaces**: Must be added to `src/types.ts`.
-4. **Mock Fixtures**: Must be added to `src/data/mockData.ts`.
-5. **Business Calculation / Formatting**: Must be placed in `src/utils/`.
+1. **New Screen**: Must be placed in `frontend/src/components/screens/<ScreenName>Screen.tsx` and registered in `frontend/src/types.ts` under `ScreenId` and `frontend/src/App.tsx`.
+2. **Reusable UI Component**: Must be placed in `frontend/src/components/common/<ComponentName>.tsx`.
+3. **Domain Types & Interfaces**: Must be added to `frontend/src/types.ts`.
+4. **Mock Fixtures**: Must be added to `frontend/src/data/mockData.ts`.
+5. **Business Calculation / Formatting**: Must be placed in `frontend/src/utils/`.
 
 ---
 
@@ -238,5 +239,5 @@ Before concluding any coding task, the AI assistant must run through this checkl
 - [ ] **Type integrity**: Are all TypeScript interfaces clean, correctly imported, and free of implicit `any`?
 - [ ] **UI consistency**: Does the component respect the medical color tokens (`#001026`, `#006c49`, `#6cf8bb`, `#f8f9ff`) and font hierarchy?
 - [ ] **Accessibility check**: Can all new interactive elements be navigated via keyboard and dismissed via `ESC`?
-- [ ] **Mock synchronization**: If types were extended, was `src/data/mockData.ts` updated with compatible mock data?
+- [ ] **Mock synchronization**: If types were extended, was `frontend/src/data/mockData.ts` updated with compatible mock data?
 - [ ] **Documentation alignment**: Were any significant architectural decisions or changes documented in `decisions.md` and `changelog.md`?

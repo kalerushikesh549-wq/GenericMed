@@ -1,5 +1,33 @@
 # Changelog
 
+## [1.8.0] - 2026-09-09
+
+### Changed
+- **Repository separation**: Moved the React/Vite application, its configuration, dependencies, generated assets, and browser environment configuration to `frontend/`.
+- Moved backend database migrations, gateway configuration, and all microservices to `backend/src/`; added an independent backend package manifest and Compose path updates.
+- Added root `README.md`, `.gitignore`, and separate `frontend/.env` and `backend/.env` files. The frontend communicates with services via the configured HTTP API gateway only.
+
+## [1.7.0] - 2026-09-09
+
+### Added
+- **Phase 6 marketplace and cold-chain foundation**:
+  - Wholesale purchase-order allocation API validates released batch availability, calculates volume tiers, and creates a cGMP/license-bound signature hash.
+  - Cold-chain telemetry ingestion records pallet temperature/humidity readings and automatically quarantines a shipment when a reading falls outside 2°C–8°C.
+  - Manufacturer portal now supports PO allocation and a visible cold-chain simulator for in-range and excursion scenarios.
+  - `06_phase6_marketplace_iot.sql` introduces durable allocation, PO-signature, shipment, and telemetry-reading tables.
+
+## [1.6.0] - 2026-09-09
+
+### Added
+- **Phase 5 payments and insurance foundation**:
+  - Token-only payment intent API with card, Apple Pay, Google Pay, and HSA/FSA method support; raw card data is rejected.
+  - Deterministic 8.5% platform-fee settlement calculation for pharmacy hub and courier payouts.
+  - Insurance comparison quote endpoint and customer catalog badge showing cash generic price against an explicitly labeled coverage estimate.
+  - 30-day and 90-day refill subscription contract endpoint plus PostgreSQL tables for transactions, settlements, quotes, and subscriptions.
+
+### Security
+- Live payment and clearinghouse behavior is credential-gated. The default demo mode neither charges cards nor submits insurance claims.
+
 ## [1.5.0] - 2026-09-09
 
 ### Added
