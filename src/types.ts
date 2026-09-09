@@ -130,3 +130,55 @@ export interface WholesaleOrder {
   dispatchEta: string;
   dock: string;
 }
+
+export interface OrangeBookEntry {
+  applNo: string;
+  productNo: string;
+  ingredient: string;
+  dosageFormRoute: string;
+  tradeName: string;
+  applicant: string;
+  strength: string;
+  teCode: string;
+  rld: boolean;
+  rs: boolean;
+  type: 'RX' | 'OTC' | 'DISCN';
+  approvalDate: string;
+  patentNo?: string;
+  patentExpireDate?: string;
+  exclusivityCode?: string;
+  exclusivityExpireDate?: string;
+}
+
+export interface AuditLogBlock {
+  blockIndex: number;
+  timestamp: string;
+  action: string;
+  actorId: string;
+  actorName: string;
+  actorRole: string;
+  actorLicense?: string;
+  resourceType: string;
+  resourceId: string;
+  details: Record<string, any>;
+  previousHash: string;
+  blockHash: string;
+  digitalSignature: string;
+  nonce: number;
+  verified: boolean;
+}
+
+export interface ComplianceStatus {
+  soc2Status: 'CERTIFIED_TYPE_II' | 'PENDING_AUDIT';
+  hipaaCompliant: boolean;
+  cfrPart11Compliant: boolean;
+  encryptionAtRest: 'AES-256-GCM (AWS KMS)' | 'AES-256-GCM (GCP Cloud KMS)';
+  encryptionInTransit: 'TLS 1.3 / Strict HSTS';
+  kmsKeyId: string;
+  kmsKeyRotationDate: string;
+  baaActiveVendorsCount: number;
+  lastAuditDate: string;
+  auditChainLength: number;
+  auditChainIntegrity: 'VALID' | 'COMPROMISED';
+}
+

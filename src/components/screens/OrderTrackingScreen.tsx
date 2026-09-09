@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CURRENT_ORDER, ASSET_IMAGES } from '../../data/mockData';
 import { ScreenId } from '../../types';
+import { telemetryService, CourierTelemetry } from '../../services/telemetry';
 
 interface OrderTrackingScreenProps {
   onNavigateScreen: (screen: ScreenId) => void;
@@ -16,6 +17,16 @@ export const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({
   const [showQrModal, setShowQrModal] = useState(false);
   const [showConsultModal, setShowConsultModal] = useState(false);
   const [consultQuestion, setConsultQuestion] = useState('');
+  const [telemetry, setTelemetry] = useState<CourierTelemetry>(telemetryService.getCurrentTelemetry());
+
+  useEffect(() => {
+    const unsubscribe = telemetryService.subscribe((data) => {
+      setTelemetry(data);
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   const handleConsultSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,7 +87,7 @@ export const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({
                 <div className="flex items-center gap-2">
                   <span className="w-2.5 h-2.5 rounded-full bg-[#6cf8bb] animate-ping"></span>
                   <span className="font-display font-bold text-base text-white">
-                    Arriving in 14 Mins
+                    Arriving in {Math.floor(telemetry.timeRemainingSeconds / 60)}m {telemetry.timeRemainingSeconds % 60 < 10 ? '0' : ''}{telemetry.timeRemainingSeconds % 60}s
                   </span>
                 </div>
                 <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#006c49] text-white">
@@ -92,11 +103,14 @@ export const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({
               {/* Progress Bar */}
               <div className="space-y-1.5 pt-1">
                 <div className="flex justify-between text-[11px] text-slate-300">
-                  <span>Dispatched from MetroCare Hub</span>
-                  <span className="font-bold text-[#6cf8bb]">Estimated: 09:06 AM</span>
+                  <span>Dispatched • {telemetry.distanceRemainingMiles} miles remaining</span>
+                  <span className="font-bold text-[#6cf8bb]">{telemetry.progressPct}% Completed</span>
                 </div>
                 <div className="w-full bg-white/20 h-2 rounded-full overflow-hidden">
-                  <div className="bg-[#6cf8bb] h-full rounded-full transition-all duration-500" style={{ width: '80%' }}></div>
+                  <div
+                    className="bg-[#6cf8bb] h-full rounded-full transition-all duration-700 ease-out"
+                    style={{ width: `${Math.max(5, telemetry.progressPct)}%` }}
+                  ></div>
                 </div>
               </div>
             </div>
@@ -128,13 +142,20 @@ export const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({
                   <span className="font-bold">Hub #104</span>
                 </div>
 
-                {/* Courier Live Pin */}
-                <div className="absolute left-[190px] top-[115px] -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center">
+                {/* Courier Live Pin with dynamic GPS tracking */}
+                <div
+                  className="absolute z-10 flex flex-col items-center transition-all duration-1000 ease-linear pointer-events-none"
+                  style={{
+                    left: `${Math.min(310, Math.max(60, 60 + (telemetry.progressPct / 100) * 260))}px`,
+                    top: `${Math.min(180, Math.max(70, 175 - (telemetry.progressPct / 100) * 100))}px`,
+                    transform: 'translate(-50%, -50%)'
+                  }}
+                >
                   <div className="w-8 h-8 rounded-full bg-[#006c49] text-white flex items-center justify-center shadow-xl border-2 border-white animate-bounce">
                     <span className="material-symbols-outlined text-[16px]">pedal_bike</span>
                   </div>
                   <span className="mt-1 px-2 py-0.5 rounded-full bg-[#001026] text-white text-[9px] font-bold shadow-md whitespace-nowrap">
-                    Miguel S. • 1.2 mi away
+                    {telemetry.courierName} • {telemetry.distanceRemainingMiles} mi away
                   </span>
                 </div>
 
@@ -144,11 +165,17 @@ export const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({
                   <span className="font-bold">You</span>
                 </div>
 
-                {/* Floating Live Telemetry Badge */}
+                {/* Floating Live Telemetry Badge HUD */}
                 <div className="absolute top-3 left-3 bg-[#001026]/90 backdrop-blur-xs text-white px-3 py-1.5 rounded-xl border border-white/10 text-xs flex items-center gap-2 shadow-md">
                   <span className="w-2 h-2 rounded-full bg-[#6cf8bb] animate-pulse"></span>
-                  <span className="text-[11px] font-mono">Live GPS Active</span>
-                  <span className="text-[11px] text-[#6ffbbe] font-mono">• 21°C Safe Cold-Chain</span>
+                  <span className="text-[11px] font-mono">Telemetry: {telemetry.speedKmh} km/h</span>
+                  <span className="text-[11px] text-[#6ffbbe] font-mono">• Head: {telemetry.heading}°</span>
+                  <span className="text-[11px] text-slate-300 font-mono hidden sm:inline">• Bat: {telemetry.batteryPct}%</span>
+                </div>
+
+                {/* Live GPS Coordinates Pill */}
+                <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-xs text-white px-2.5 py-1 rounded-lg text-[10px] font-mono">
+                  GPS: {telemetry.latitude}, {telemetry.longitude}
                 </div>
               </div>
 

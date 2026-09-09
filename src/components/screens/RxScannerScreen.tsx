@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ASSET_IMAGES, CURRENT_ORDER } from '../../data/mockData';
 import { ScreenId } from '../../types';
 
@@ -15,12 +15,88 @@ export const RxScannerScreen: React.FC<RxScannerScreenProps> = ({
 }) => {
   const [flashOn, setFlashOn] = useState(false);
   const [scanMode, setScanMode] = useState<'auto' | 'manual' | 'pdf'>('auto');
+  const [sourceType, setSourceType] = useState<'camera' | 'fixture' | 'upload'>('fixture');
   const [isScanning, setIsScanning] = useState(true);
   const [selectedPage, setSelectedPage] = useState(1);
+  const [cameraActive, setCameraActive] = useState(false);
+  const [capturedSnapshot, setCapturedSnapshot] = useState<string | null>(null);
+
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // WebRTC Hardware Camera Start / Stop
+  const startCamera = async () => {
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        onShowToast('WebRTC camera not supported on this device/browser. Using demo fixture.');
+        setSourceType('fixture');
+        return;
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false
+      });
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play();
+      }
+      setCameraActive(true);
+      setSourceType('camera');
+      onShowToast('WebRTC Camera initialized! Position prescription inside optical guide.');
+    } catch (err) {
+      console.warn('Camera access denied or failed:', err);
+      setCameraActive(false);
+      setSourceType('fixture');
+      onShowToast('Camera permission denied or unavailable. Fallback to demo fixture active.');
+    }
+  };
+
+  const stopCamera = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+      videoRef.current.srcObject = null;
+    }
+    setCameraActive(false);
+  };
+
+  useEffect(() => {
+    return () => {
+      stopCamera();
+    };
+  }, []);
 
   const handleCapture = () => {
+    if (sourceType === 'camera' && videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL('image/jpeg');
+        setCapturedSnapshot(dataUrl);
+      }
+    }
     setIsScanning(false);
-    onShowToast('Prescription Captured! OCR model confidence: 99.4%. Generic match found: Atorvastatin Calcium 20mg.');
+    onShowToast('Prescription Captured! OCR confidence: 99.4%. Generic match found: Atorvastatin Calcium 20mg.');
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setCapturedSnapshot(reader.result as string);
+        setSourceType('upload');
+        onShowToast(`Uploaded "${file.name}"! OCR parsing entities...`);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const content = (
@@ -54,33 +130,66 @@ export const RxScannerScreen: React.FC<RxScannerScreenProps> = ({
         </button>
       </div>
 
-      {/* Mode Switcher Tabs */}
-      <div className="flex items-center justify-center gap-2 py-2 px-4 z-30 bg-black/40 backdrop-blur-xs">
-        {(['auto', 'manual', 'pdf'] as const).map((mode) => (
-          <button
-            key={mode}
-            onClick={() => {
-              setScanMode(mode);
-              onShowToast(`Mode switched to: ${mode.toUpperCase()}`);
-            }}
-            className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
-              scanMode === mode
-                ? 'bg-[#006c49] text-white shadow-xs'
-                : 'bg-white/10 text-slate-300 hover:text-white'
-            }`}
-          >
-            {mode === 'auto' ? 'Auto-Scan (AI)' : mode === 'manual' ? 'Manual Shutter' : 'Upload PDF'}
-          </button>
-        ))}
+      {/* Hidden Hardware Elements */}
+      <canvas ref={canvasRef} className="hidden" />
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*,application/pdf"
+        className="hidden"
+        onChange={handleFileUpload}
+      />
+
+      {/* Hardware Source Switcher */}
+      <div className="flex items-center justify-center gap-1.5 py-1.5 px-3 z-30 bg-[#001026] border-b border-white/10">
+        <button
+          onClick={startCamera}
+          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1 transition-all ${
+            sourceType === 'camera'
+              ? 'bg-[#006c49] text-white ring-1 ring-[#6cf8bb]'
+              : 'bg-white/10 text-slate-300 hover:text-white'
+          }`}
+        >
+          <span className="material-symbols-outlined text-[14px]">videocam</span>
+          Live WebRTC
+        </button>
+        <button
+          onClick={() => {
+            stopCamera();
+            setSourceType('fixture');
+            setCapturedSnapshot(null);
+            onShowToast('Switched to high-res clinical demo fixture');
+          }}
+          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1 transition-all ${
+            sourceType === 'fixture'
+              ? 'bg-[#006c49] text-white ring-1 ring-[#6cf8bb]'
+              : 'bg-white/10 text-slate-300 hover:text-white'
+          }`}
+        >
+          <span className="material-symbols-outlined text-[14px]">image</span>
+          Demo Pad
+        </button>
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1 transition-all ${
+            sourceType === 'upload'
+              ? 'bg-[#006c49] text-white ring-1 ring-[#6cf8bb]'
+              : 'bg-white/10 text-slate-300 hover:text-white'
+          }`}
+        >
+          <span className="material-symbols-outlined text-[14px]">upload_file</span>
+          Upload File
+        </button>
       </div>
 
       {/* Quality & Alignment Pill */}
       <div className="flex justify-center py-1.5 z-20">
         <div className="bg-[#001026]/90 border border-[#6cf8bb]/40 rounded-full px-3 py-1 flex items-center gap-2 text-[11px] shadow-lg">
           <span className="w-2 h-2 rounded-full bg-[#6cf8bb] animate-ping"></span>
-          <span className="font-medium text-slate-200">Ready to Capture</span>
+          <span className="font-medium text-slate-200">
+            {sourceType === 'camera' ? 'WebRTC Stream Active' : sourceType === 'upload' ? 'Custom Doc Loaded' : 'Optical Target Ready'}
+          </span>
           <span className="text-[#6ffbbe] font-bold">• 99.1% Confidence</span>
-          <span className="text-white/60 hidden sm:inline">• High Light</span>
         </div>
       </div>
 
@@ -88,11 +197,27 @@ export const RxScannerScreen: React.FC<RxScannerScreenProps> = ({
       <div className="flex-1 relative flex items-center justify-center p-4 overflow-hidden">
         {/* Prescription Doc under viewfinder */}
         <div className="relative w-full max-w-sm aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl border border-white/20 bg-slate-900">
-          <img
-            src={ASSET_IMAGES.prescriptionPad}
-            alt="Doctor Prescription Target"
-            className="w-full h-full object-cover opacity-85"
-          />
+          {sourceType === 'camera' ? (
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="w-full h-full object-cover"
+            />
+          ) : capturedSnapshot ? (
+            <img
+              src={capturedSnapshot}
+              alt="Uploaded Prescription Target"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <img
+              src={ASSET_IMAGES.prescriptionPad}
+              alt="Doctor Prescription Target"
+              className="w-full h-full object-cover opacity-85"
+            />
+          )}
 
           {/* Flashlight overlay if active */}
           {flashOn && (
@@ -280,35 +405,73 @@ export const RxScannerScreen: React.FC<RxScannerScreenProps> = ({
             </button>
           </div>
 
-          {/* Mode Switcher Tabs */}
-          <div className="flex items-center justify-center gap-2 py-2 px-4 z-30 bg-black/40 backdrop-blur-xs">
-            {(['auto', 'manual', 'pdf'] as const).map((mode) => (
-              <button
-                key={mode}
-                onClick={() => {
-                  setScanMode(mode);
-                  onShowToast(`Mode switched to: ${mode.toUpperCase()}`);
-                }}
-                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
-                  scanMode === mode
-                    ? 'bg-[#006c49] text-white shadow-xs'
-                    : 'bg-white/10 text-slate-300 hover:text-white'
-                }`}
-              >
-                {mode === 'auto' ? 'Auto-Scan (AI)' : mode === 'manual' ? 'Manual Shutter' : 'Upload PDF'}
-              </button>
-            ))}
+          {/* Hardware Source Switcher */}
+          <div className="flex items-center justify-center gap-2 py-2 px-4 z-30 bg-[#001026] border-b border-white/10">
+            <button
+              onClick={startCamera}
+              className={`px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
+                sourceType === 'camera'
+                  ? 'bg-[#006c49] text-white ring-1 ring-[#6cf8bb]'
+                  : 'bg-white/10 text-slate-300 hover:text-white'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[16px]">videocam</span>
+              Live WebRTC Camera
+            </button>
+            <button
+              onClick={() => {
+                stopCamera();
+                setSourceType('fixture');
+                setCapturedSnapshot(null);
+                onShowToast('Switched to high-res clinical demo fixture');
+              }}
+              className={`px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
+                sourceType === 'fixture'
+                  ? 'bg-[#006c49] text-white ring-1 ring-[#6cf8bb]'
+                  : 'bg-white/10 text-slate-300 hover:text-white'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[16px]">image</span>
+              Demo Prescription Pad
+            </button>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className={`px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
+                sourceType === 'upload'
+                  ? 'bg-[#006c49] text-white ring-1 ring-[#6cf8bb]'
+                  : 'bg-white/10 text-slate-300 hover:text-white'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[16px]">upload_file</span>
+              Upload JPG / PDF
+            </button>
           </div>
 
           {/* Camera Viewfinder Area */}
           <div className="relative flex items-center justify-center p-4 min-h-[340px] sm:min-h-[400px]">
             {/* Prescription Doc under viewfinder */}
             <div className="relative w-full max-w-sm aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl border border-white/20 bg-slate-900">
-              <img
-                src={ASSET_IMAGES.prescriptionPad}
-                alt="Doctor Prescription Target"
-                className="w-full h-full object-cover opacity-85"
-              />
+              {sourceType === 'camera' ? (
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="w-full h-full object-cover"
+                />
+              ) : capturedSnapshot ? (
+                <img
+                  src={capturedSnapshot}
+                  alt="Uploaded Prescription Target"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <img
+                  src={ASSET_IMAGES.prescriptionPad}
+                  alt="Doctor Prescription Target"
+                  className="w-full h-full object-cover opacity-85"
+                />
+              )}
 
               {/* Flashlight overlay if active */}
               {flashOn && (

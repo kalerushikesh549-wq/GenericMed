@@ -1,0 +1,123 @@
+version: '3.8'
+
+services:
+  # 1. Primary Relational Store with Row-Level Security
+  postgres:
+    image: postgres:16-alpine
+    container_name: genericmed-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: genericmed
+      POSTGRES_USER: genericmed_admin
+      POSTGRES_PASSWORD: genericmed_secure_password_2026
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/01_schema.sql:/docker-entrypoint-initdb.d/01_schema.sql
+      - ./db/02_rls_policies.sql:/docker-entrypoint-initdb.d/02_rls_policies.sql
+      - ./db/03_seed_data.sql:/docker-entrypoint-initdb.d/03_seed_data.sql
+      - ./db/04_phase4_compliance.sql:/docker-entrypoint-initdb.d/04_phase4_compliance.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U genericmed_admin -d genericmed"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 2. Redis Cache & Courier Telemetry Bus
+  redis:
+    image: redis:7.2-alpine
+    container_name: genericmed-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 3. Medicine & Catalog Microservice (Go)
+  catalog-service:
+    build:
+      context: ./services/catalog
+      dockerfile: Dockerfile
+    container_name: genericmed-catalog
+    restart: unless-stopped
+    environment:
+      PORT: 8001
+      DATABASE_URL: postgres://genericmed_admin:genericmed_secure_password_2026@postgres:5432/genericmed?sslmode=disable
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "8001:8001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # 4. Prescription OCR & Verification Microservice (Python / FastAPI)
+  ocr-service:
+    build:
+      context: ./services/ocr
+      dockerfile: Dockerfile
+    container_name: genericmed-ocr
+    restart: unless-stopped
+    environment:
+      PORT: 8002
+      DATABASE_URL: postgres://genericmed_admin:genericmed_secure_password_2026@postgres:5432/genericmed?sslmode=disable
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173}
+    ports:
+      - "8002:8002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # 5. Order, Fulfillment & Express Dispatch Microservice (Node.js / Express)
+  order-service:
+    build:
+      context: ./services/order
+      dockerfile: Dockerfile
+    container_name: genericmed-order
+    restart: unless-stopped
+    environment:
+      PORT: 8003
+      DATABASE_URL: postgres://genericmed_admin:genericmed_secure_password_2026@postgres:5432/genericmed?sslmode=disable
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "8003:8003"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # 6. FDA Orange Book nightly catalog ingestion. Run via a scheduler in production.
+  fda-sync:
+    build:
+      context: ./services/fda-sync
+      dockerfile: Dockerfile
+    container_name: genericmed-fda-sync
+    profiles: ["compliance-jobs"]
+    environment:
+      DATABASE_URL: postgres://genericmed_admin:genericmed_secure_password_2026@postgres:5432/genericmed?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # 7. Unified API Gateway Reverse Proxy
+  gateway:
+    image: nginx:alpine
+    container_name: genericmed-gateway
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - catalog-service
+      - ocr-service
+      - order-service
+
+volumes:
+  pgdata:

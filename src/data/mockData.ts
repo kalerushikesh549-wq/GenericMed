@@ -1,4 +1,5 @@
-import { MedicineItem, PrescriptionOrder, PharmacyHub, BatchLot, WholesaleOrder, UserProfile } from '../types';
+import { MedicineItem, PrescriptionOrder, PharmacyHub, BatchLot, WholesaleOrder, UserProfile, OrangeBookEntry, AuditLogBlock, ComplianceStatus } from '../types';
+
 
 export const MEDICINES: MedicineItem[] = [
   {
@@ -300,4 +301,219 @@ export const DEMO_USERS: UserProfile[] = [
     joinedDate: 'September 2021'
   }
 ];
+
+export const ORANGE_BOOK_ENTRIES: OrangeBookEntry[] = [
+  {
+    applNo: 'NDA 020702',
+    productNo: '001',
+    ingredient: 'ATORVASTATIN CALCIUM',
+    dosageFormRoute: 'TABLET; ORAL',
+    tradeName: 'LIPITOR',
+    applicant: 'VIATRIS SPECIALTY LLC',
+    strength: 'EQ 20MG BASE',
+    teCode: 'AB',
+    rld: true,
+    rs: true,
+    type: 'RX',
+    approvalDate: 'Dec 17, 1996',
+    patentNo: 'US 5273995',
+    patentExpireDate: 'Nov 30, 2011',
+    exclusivityCode: 'NCE',
+    exclusivityExpireDate: 'Expired (Off-Patent • Multi-Source Generic)'
+  },
+  {
+    applNo: 'ANDA 090548',
+    productNo: '002',
+    ingredient: 'ATORVASTATIN CALCIUM',
+    dosageFormRoute: 'TABLET; ORAL',
+    tradeName: 'ATORVASTATIN CALCIUM',
+    applicant: 'TEVA PHARMS USA INC',
+    strength: 'EQ 20MG BASE',
+    teCode: 'AB',
+    rld: false,
+    rs: false,
+    type: 'RX',
+    approvalDate: 'Nov 30, 2011',
+    patentNo: 'None (Generic ANDA)',
+    patentExpireDate: 'N/A',
+    exclusivityCode: 'CGT (Competitive Generic Therapy)',
+    exclusivityExpireDate: 'Fully Off-Patent'
+  },
+  {
+    applNo: 'NDA 050564',
+    productNo: '001',
+    ingredient: 'AMOXICILLIN; CLAVULANATE POTASSIUM',
+    dosageFormRoute: 'TABLET; ORAL',
+    tradeName: 'AUGMENTIN',
+    applicant: 'GLAXOSMITHKLINE LLC',
+    strength: '500MG; EQ 125MG BASE',
+    teCode: 'AB',
+    rld: true,
+    rs: true,
+    type: 'RX',
+    approvalDate: 'Aug 06, 1984',
+    patentNo: 'US 4441609',
+    patentExpireDate: 'Expired',
+    exclusivityCode: 'EXPIRED',
+    exclusivityExpireDate: 'Multi-Source Generic Market'
+  },
+  {
+    applNo: 'NDA 021202',
+    productNo: '001',
+    ingredient: 'METFORMIN HYDROCHLORIDE',
+    dosageFormRoute: 'TABLET, EXTENDED RELEASE; ORAL',
+    tradeName: 'GLUCOPHAGE XR',
+    applicant: 'BRISTOL MYERS SQUIBB CO',
+    strength: '500MG',
+    teCode: 'AB',
+    rld: true,
+    rs: true,
+    type: 'RX',
+    approvalDate: 'Oct 13, 2000',
+    patentNo: 'US 6099859',
+    patentExpireDate: 'Expired',
+    exclusivityCode: 'EXPIRED',
+    exclusivityExpireDate: 'Multi-Source Generic Market'
+  },
+  {
+    applNo: 'NDA 021366',
+    productNo: '001',
+    ingredient: 'ROSUVASTATIN CALCIUM',
+    dosageFormRoute: 'TABLET; ORAL',
+    tradeName: 'CRESTOR',
+    applicant: 'ASTRAZENECA PHARMS',
+    strength: 'EQ 10MG BASE',
+    teCode: 'AB',
+    rld: true,
+    rs: true,
+    type: 'RX',
+    approvalDate: 'Aug 12, 2003',
+    patentNo: 'US 6858618',
+    patentExpireDate: 'Jan 08, 2016',
+    exclusivityCode: 'PED (Pediatric Exclusivity)',
+    exclusivityExpireDate: 'Expired'
+  },
+  {
+    applNo: 'NDA 019810',
+    productNo: '001',
+    ingredient: 'OMEPRAZOLE',
+    dosageFormRoute: 'CAPSULE, DELAYED RELEASE; ORAL',
+    tradeName: 'PRILOSEC',
+    applicant: 'COVIS PHARMA BV',
+    strength: '20MG',
+    teCode: 'AB',
+    rld: true,
+    rs: true,
+    type: 'RX',
+    approvalDate: 'Sep 14, 1989',
+    patentNo: 'US 4255431',
+    patentExpireDate: 'Expired',
+    exclusivityCode: 'EXPIRED',
+    exclusivityExpireDate: 'Multi-Source Generic Market'
+  }
+];
+
+export const AUDIT_LOG_CHAIN: AuditLogBlock[] = [
+  {
+    blockIndex: 101,
+    timestamp: '2026-09-08T14:15:22.108Z',
+    action: 'PRESCRIPTION_INGESTED',
+    actorId: 'usr-sys-ocr',
+    actorName: 'AI OCR Parser Engine (v1.2)',
+    actorRole: 'system_service',
+    resourceType: 'PrescriptionOrder',
+    resourceId: 'ORD-88219',
+    details: {
+      brandPrescribed: 'Lipitor 20mg',
+      genericSubstitute: 'Atorvastatin Calcium 20mg',
+      confidence: 99.1,
+      source: 'WebRTC HD Camera Snapshot'
+    },
+    previousHash: '0000000000000000000000000000000000000000000000000000000000000000',
+    blockHash: '6f8a49c28be7815ad47a5089311e967a5b306b986b2bbad129206b008d51d184',
+    digitalSignature: 'GM-SIG-2026-GENESIS-88219',
+    nonce: 1042,
+    verified: true
+  },
+  {
+    blockIndex: 102,
+    timestamp: '2026-09-08T14:18:04.819Z',
+    action: 'CLINICAL_VERIFICATION_SIGNOFF',
+    actorId: 'user-pharm-1',
+    actorName: 'Dr. Marcus Vance, PharmD',
+    actorRole: 'pharmacist',
+    actorLicense: 'GDL-99201-MH (NY State Board)',
+    resourceType: 'PrescriptionOrder',
+    resourceId: 'ORD-88219',
+    details: {
+      substitutionConfirmed: true,
+      bioEquivalenceAUC: 99.4,
+      fdaCode: 'AB Rated',
+      mandate: '21 CFR § 1306 / NY PB § 6810'
+    },
+    previousHash: '6f8a49c28be7815ad47a5089311e967a5b306b986b2bbad129206b008d51d184',
+    blockHash: '9b3e104f2910d8a57cf1846b403487c9d96c813a01004bb15c54e0a4f664a8ec',
+    digitalSignature: 'GM-SIG-2026-PHARM-VANCE-99201',
+    nonce: 8819,
+    verified: true
+  },
+  {
+    blockIndex: 103,
+    timestamp: '2026-09-08T14:21:40.042Z',
+    action: 'TAMPER_SEAL_SERIALIZATION',
+    actorId: 'user-pharm-1',
+    actorName: 'Dr. Marcus Vance, PharmD',
+    actorRole: 'pharmacist',
+    actorLicense: 'GDL-99201-MH (NY State Board)',
+    resourceType: 'PrescriptionOrder',
+    resourceId: 'ORD-88219',
+    details: {
+      tamperSealId: 'GM-SEAL-88219-BK',
+      ndcScanned: '0071-0156-23',
+      batchVerified: '#CP-9021',
+      thermalLabelPrinted: true
+    },
+    previousHash: '9b3e104f2910d8a57cf1846b403487c9d96c813a01004bb15c54e0a4f664a8ec',
+    blockHash: '4a1e948f02c67bfa39d2551ec983577d8531bf699435b7194f273030c69d846f',
+    digitalSignature: 'GM-SIG-2026-SEAL-ARMED-88219',
+    nonce: 4901,
+    verified: true
+  },
+  {
+    blockIndex: 104,
+    timestamp: '2026-09-08T14:32:19.418Z',
+    action: 'DOORSTEP_PIN_HANDOVER',
+    actorId: 'usr-courier-14',
+    actorName: 'Miguel Santos (E-Cargo #14)',
+    actorRole: 'courier',
+    resourceType: 'PrescriptionOrder',
+    resourceId: 'ORD-88219',
+    details: {
+      pinVerified: '8410',
+      handoverLocation: '40.6928° N, 73.9903° W',
+      timeToDeliverMins: 17.2,
+      sealIntactConfirmed: true
+    },
+    previousHash: '4a1e948f02c67bfa39d2551ec983577d8531bf699435b7194f273030c69d846f',
+    blockHash: 'c28d90471b693240e159af03c4013149842c16196ff319ef20e7df61e0bb437b',
+    digitalSignature: 'GM-SIG-2026-HANDOVER-SUCCESS-8410',
+    nonce: 7215,
+    verified: true
+  }
+];
+
+export const COMPLIANCE_STATUS: ComplianceStatus = {
+  soc2Status: 'CERTIFIED_TYPE_II',
+  hipaaCompliant: true,
+  cfrPart11Compliant: true,
+  encryptionAtRest: 'AES-256-GCM (AWS KMS)',
+  encryptionInTransit: 'TLS 1.3 / Strict HSTS',
+  kmsKeyId: 'arn:aws:kms:us-east-1:481920491823:key/mrk-882910f-gm-phi-master',
+  kmsKeyRotationDate: 'Auto-Rotated: Aug 2026 (Annual Policy)',
+  baaActiveVendorsCount: 8,
+  lastAuditDate: 'September 01, 2026 (KPMG Healthcare Assurance)',
+  auditChainLength: AUDIT_LOG_CHAIN.length,
+  auditChainIntegrity: 'VALID'
+};
+
 

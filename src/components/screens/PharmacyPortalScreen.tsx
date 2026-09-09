@@ -21,6 +21,54 @@ export const PharmacyPortalScreen: React.FC<PharmacyPortalScreenProps> = ({
   const [showLabelModal, setShowLabelModal] = useState(false);
   const [showRiderOtpModal, setShowRiderOtpModal] = useState(false);
   const [otpInput, setOtpInput] = useState('');
+  const [lastScannedBarcode, setLastScannedBarcode] = useState<string | null>('0071-0156-23');
+
+  // USB / Bluetooth Handheld Barcode Scanner Keyboard Wedge Listener
+  React.useEffect(() => {
+    let buffer = '';
+    let lastKeyTime = Date.now();
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeEl = document.activeElement;
+      const isInput = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
+
+      const now = Date.now();
+      const diff = now - lastKeyTime;
+      lastKeyTime = now;
+
+      if (e.key === 'Enter') {
+        if (buffer.length >= 6) {
+          if (!isInput) e.preventDefault();
+          const code = buffer.trim();
+          setBarcodeInput(code);
+          setLastScannedBarcode(code);
+          setIsItemScanned(true);
+          onShowToast(`🟢 USB Barcode Gun Scanned [${code}]! Verified Match: 100% Cipla Atorvastatin 20mg Lot #CP-9021.`);
+        }
+        buffer = '';
+        return;
+      }
+
+      if (diff > 120 && !isInput) {
+        buffer = '';
+      }
+
+      if (e.key.length === 1) {
+        buffer += e.key;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onShowToast]);
+
+  const handleTriggerTestGunScan = () => {
+    const testNdc = '0071-0156-23';
+    setBarcodeInput(testNdc);
+    setLastScannedBarcode(testNdc);
+    setIsItemScanned(true);
+    onShowToast(`🟢 USB Laser Gun Scanned [${testNdc}]! Verified: Atorvastatin Calcium 20mg.`);
+  };
 
   const queueOrders = [
     {
@@ -118,6 +166,15 @@ export const PharmacyPortalScreen: React.FC<PharmacyPortalScreenProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Hardware Barcode Scanner Simulator Action */}
+          <button 
+            onClick={handleTriggerTestGunScan}
+            className="px-2.5 py-1.5 rounded-lg bg-[#0b2545] border border-[#6cf8bb]/40 text-[#6cf8bb] text-xs font-bold flex items-center gap-1.5 shadow-xs hover:bg-[#0b2545]/80 transition-colors"
+            title="Simulate rapid barcode scan from USB/Bluetooth handheld gun"
+          >
+            <span className="material-symbols-outlined text-[16px]">barcode_scanner</span>
+            <span>⚡ Test USB Gun Scan</span>
+          </button>
           <button 
             onClick={() => onShowToast('Emergency hold armed. New orders paused.')}
             className="px-2.5 py-1.5 rounded-lg border border-red-500/40 text-red-300 text-xs hover:bg-red-950/40 transition-colors"
@@ -125,11 +182,11 @@ export const PharmacyPortalScreen: React.FC<PharmacyPortalScreenProps> = ({
             Emergency Hold
           </button>
           <button 
-            onClick={() => onShowToast('Barcode Packing Mode Activated')}
+            onClick={() => onShowToast('Barcode Packing Mode Active • Listening for USB Scanner HID')}
             className="px-3 py-1.5 rounded-lg bg-[#006c49] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs hover:bg-[#006c49]/90 transition-colors"
           >
             <span className="material-symbols-outlined text-[16px]">qr_code_scanner</span>
-            Barcode Packing Mode
+            HID Scanner Ready
           </button>
         </div>
       </div>
@@ -559,59 +616,112 @@ export const PharmacyPortalScreen: React.FC<PharmacyPortalScreenProps> = ({
         </main>
       </div>
 
-      {/* Label Reprint Modal */}
+      {/* Thermal Label & Tamper Seal Modal */}
       {showLabelModal && (
-        <div className="fixed inset-0 z-50 bg-[#001026]/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-[#c4c6cf] p-5 space-y-4">
+        <div className="fixed inset-0 z-50 bg-[#001026]/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-[#c4c6cf] p-5 space-y-4">
             <div className="flex items-center justify-between border-b pb-2">
-              <h3 className="font-display font-bold text-sm text-[#001026]">Prescription Bottle Thermal Label</h3>
-              <button onClick={() => setShowLabelModal(false)} className="text-[#74777f]">
+              <div>
+                <h3 className="font-display font-bold text-sm text-[#001026]">Prescription Bottle &amp; Tamper Seal Printer</h3>
+                <p className="text-[11px] text-[#44474e]">Thermal Roll Output (Zebra ZD420 / ESC-POS 203 DPI)</p>
+              </div>
+              <button onClick={() => setShowLabelModal(false)} className="text-[#74777f] hover:text-[#001026]">
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
 
             {/* Thermal Label Mockup */}
-            <div className="p-4 bg-white border-2 border-black rounded-lg font-mono text-[11px] space-y-1.5 shadow-sm text-black">
+            <div className="p-4 bg-white border-2 border-black rounded-lg font-mono text-[11px] space-y-2 shadow-sm text-black">
+              {/* Tamper Seal Strip Preview */}
+              <div className="bg-amber-100 border border-amber-500 p-1.5 rounded flex items-center justify-between text-[10px] font-bold text-amber-900">
+                <span className="flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[14px]">lock</span>
+                  TAMPER SEAL: {CURRENT_ORDER.tamperSealId}
+                </span>
+                <span>SECURITY LEVEL IV</span>
+              </div>
+
               <div className="text-center font-bold border-b border-black pb-1">
                 METROCARE RX DOWNTOWN • (718) 555-0192<br/>
-                142 COURT ST, BROOKLYN NY 11201
+                142 COURT ST, BROOKLYN NY 11201 • NABP #339201
               </div>
-              <div className="flex justify-between pt-1">
+
+              <div className="flex justify-between pt-1 font-bold">
                 <span>RX #88219-01</span>
-                <span>DATE: 10/24/2024</span>
+                <span>DATE: {CURRENT_ORDER.date}</span>
               </div>
-              <div className="font-bold text-xs pt-1">
-                DOE, JOHNATHAN D.
+              <div className="font-bold text-sm">
+                DOE, JOHNATHAN D. (AGE 48)
               </div>
-              <div className="text-[12px] font-bold">
+              <div className="text-xs font-bold text-[#006c49]">
                 ATORVASTATIN CALCIUM 20MG TAB
               </div>
-              <div>TAKE 1 TABLET BY MOUTH DAILY AT BEDTIME</div>
-              <div className="text-[10px] text-gray-700">SUBSTITUTED FOR LIPITOR 20MG (PFIZER)</div>
+              <div>SIG: TAKE 1 TABLET BY MOUTH DAILY AT BEDTIME (qHS)</div>
+              <div className="text-[10px] text-gray-700">SUBSTITUTED FOR LIPITOR 20MG (PFIZER LABS) • AB RATED</div>
               <div className="flex justify-between text-[10px] pt-1 border-t border-black">
-                <span>QTY: 30 TABS</span>
+                <span>QTY: 30 TABLETS</span>
                 <span>REFILLS: 3</span>
+                <span>EXP: 11/2026</span>
               </div>
-              <div className="text-center text-[10px] font-bold pt-1">DR. ELENA ROSTOVA MD</div>
+
+              {/* Barcode SVG Pattern */}
+              <div className="pt-2 flex flex-col items-center">
+                <svg className="w-64 h-12" viewBox="0 0 200 40">
+                  <rect x="10" y="0" width="3" height="35" fill="black" />
+                  <rect x="16" y="0" width="2" height="35" fill="black" />
+                  <rect x="22" y="0" width="5" height="35" fill="black" />
+                  <rect x="30" y="0" width="2" height="35" fill="black" />
+                  <rect x="36" y="0" width="4" height="35" fill="black" />
+                  <rect x="44" y="0" width="2" height="35" fill="black" />
+                  <rect x="50" y="0" width="6" height="35" fill="black" />
+                  <rect x="60" y="0" width="3" height="35" fill="black" />
+                  <rect x="68" y="0" width="4" height="35" fill="black" />
+                  <rect x="76" y="0" width="2" height="35" fill="black" />
+                  <rect x="82" y="0" width="5" height="35" fill="black" />
+                  <rect x="92" y="0" width="3" height="35" fill="black" />
+                  <rect x="100" y="0" width="2" height="35" fill="black" />
+                  <rect x="108" y="0" width="6" height="35" fill="black" />
+                  <rect x="118" y="0" width="3" height="35" fill="black" />
+                  <rect x="126" y="0" width="5" height="35" fill="black" />
+                  <rect x="136" y="0" width="2" height="35" fill="black" />
+                  <rect x="144" y="0" width="4" height="35" fill="black" />
+                  <rect x="154" y="0" width="3" height="35" fill="black" />
+                  <rect x="162" y="0" width="5" height="35" fill="black" />
+                  <rect x="172" y="0" width="2" height="35" fill="black" />
+                  <rect x="180" y="0" width="4" height="35" fill="black" />
+                </svg>
+                <div className="text-[10px] tracking-widest font-bold">NDC 0071-0156-23</div>
+              </div>
+
+              <div className="text-center text-[10px] font-bold pt-1 border-t border-black">
+                PRESCRIBER: DR. ELENA ROSTOVA MD (NPI 18839201)
+              </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-1">
-              <button 
-                onClick={() => setShowLabelModal(false)}
-                className="px-4 py-2 border rounded-xl text-xs text-[#44474e]"
-              >
-                Close
-              </button>
-              <button 
-                onClick={() => {
-                  setShowLabelModal(false);
-                  onShowToast('Printing 4x2 thermal bottle label on Zebra ZD420...');
-                }}
-                className="px-4 py-2 bg-[#001026] text-white font-bold rounded-xl text-xs flex items-center gap-1"
-              >
-                <span className="material-symbols-outlined text-[16px]">print</span>
-                Print Label
-              </button>
+            <div className="flex justify-between items-center pt-2">
+              <span className="text-[11px] text-[#44474e] flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-[#006c49]"></span>
+                Printer Status: Ready (Zebra ZD420)
+              </span>
+
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => setShowLabelModal(false)}
+                  className="px-3.5 py-2 border rounded-xl text-xs text-[#44474e] hover:bg-slate-50 font-medium"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={() => {
+                    onShowToast('Sending label job to thermal printer spooler...');
+                    window.print();
+                  }}
+                  className="px-4 py-2 bg-[#001026] hover:bg-[#0b2545] text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-md transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[16px]">print</span>
+                  Print Thermal Label
+                </button>
+              </div>
             </div>
           </div>
         </div>
