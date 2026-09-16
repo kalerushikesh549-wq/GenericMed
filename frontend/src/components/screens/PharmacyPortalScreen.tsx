@@ -232,7 +232,7 @@ export const PharmacyPortalScreen: React.FC<PharmacyPortalScreenProps> = ({
               </button>
 
               <button 
-                onClick={() => onShowToast("Today's payout: $2,840.50 transferred to dispensary account")}
+                onClick={() => onShowToast("Today's payout: ₹2,84,050 transferred to dispensary account")}
                 className="w-full flex items-center gap-3 px-3 py-2 text-[#44474e] hover:text-[#0b1c30] hover:bg-[#eff4ff] rounded-lg text-left text-xs font-medium"
               >
                 <span className="material-symbols-outlined text-[18px]">payments</span>
@@ -254,7 +254,7 @@ export const PharmacyPortalScreen: React.FC<PharmacyPortalScreenProps> = ({
               MV
             </div>
             <div>
-              <div className="text-xs font-bold text-[#001026]">Dr. Marcus Vance</div>
+              <div className="text-xs font-bold text-[#001026]">Dr. Amit Patil, D.Pharm</div>
               <div className="text-[10px] text-[#44474e]">Lead Pharmacist on Duty</div>
             </div>
           </div>
@@ -291,9 +291,9 @@ export const PharmacyPortalScreen: React.FC<PharmacyPortalScreenProps> = ({
             <div className="p-3.5 bg-white rounded-xl border border-[#c4c6cf]/70 shadow-xs">
               <span className="text-[10px] font-bold text-[#44474e] uppercase">Today&apos;s Revenue / Payout</span>
               <div className="text-xl font-display font-extrabold text-[#001026] mt-1">
-                $2,840.50
+                ₹2,84,050
               </div>
-              <p className="text-[11px] text-[#006c49] font-semibold mt-1">+$255.60 dispensary take</p>
+              <p className="text-[11px] text-[#006c49] font-semibold mt-1">+₹25,560 dispensary commission</p>
             </div>
           </div>
 

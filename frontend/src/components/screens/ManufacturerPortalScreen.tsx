@@ -32,44 +32,44 @@ export const ManufacturerPortalScreen: React.FC<ManufacturerPortalScreenProps> =
     {
       id: 'f-1',
       molecule: 'Atorvastatin Calcium Trihydrate',
-      brandEquivalent: 'Lipitor (Pfizer) 20mg',
-      baseCost: '$2.40',
-      tier1: '$12.50',
-      tier2: '$11.00',
-      tier3: '$9.20',
+      brandEquivalent: 'Storvas 20 (Sun Pharma)',
+      baseCost: '₹14.50',
+      tier1: '₹45.00',
+      tier2: '₹38.00',
+      tier3: '₹32.00',
       available: '45,000 btls',
       category: 'Cardiovascular'
     },
     {
       id: 'f-2',
       molecule: 'Amoxicillin + Pot. Clavulanate',
-      brandEquivalent: 'Augmentin (GSK) 625mg',
-      baseCost: '$1.80',
-      tier1: '$7.20',
-      tier2: '$6.10',
-      tier3: '$5.00',
+      brandEquivalent: 'Augmentin 625 Duo (GSK India)',
+      baseCost: '₹18.00',
+      tier1: '₹62.00',
+      tier2: '₹54.00',
+      tier3: '₹48.00',
       available: '28,000 btls',
       category: 'Antibiotics'
     },
     {
       id: 'f-3',
       molecule: 'Metformin HCl Extended-Release',
-      brandEquivalent: 'Glucophage XR (BMS) 500mg',
-      baseCost: '$1.10',
-      tier1: '$5.00',
-      tier2: '$4.20',
-      tier3: '$3.50',
+      brandEquivalent: 'Glycomet-GP 2 (USV)',
+      baseCost: '₹8.50',
+      tier1: '₹32.00',
+      tier2: '₹28.00',
+      tier3: '₹24.00',
       available: '60,000 btls',
       category: 'Diabetes'
     },
     {
       id: 'f-4',
       molecule: 'Rosuvastatin Calcium',
-      brandEquivalent: 'Crestor (AstraZeneca) 10mg',
-      baseCost: '$2.80',
-      tier1: '$14.00',
-      tier2: '$12.50',
-      tier3: '$10.80',
+      brandEquivalent: 'Dolo 650 (Micro Labs)',
+      baseCost: '₹2.80',
+      tier1: '₹8.50',
+      tier2: '₹6.50',
+      tier3: '₹4.50',
       available: '32,000 btls',
       category: 'Cardiovascular'
     }
@@ -78,7 +78,7 @@ export const ManufacturerPortalScreen: React.FC<ManufacturerPortalScreenProps> =
   const handleReleaseBatch = () => {
     setIsBatchReleased(true);
     setShowReleaseModal(false);
-    onShowToast(`Batch ${BATCH_DOSSIER.batchNumber} Released to Platform! 45,000 units published to partner pharmacies.`);
+    onShowToast(`Batch ${BATCH_DOSSIER.batchNumber} Released to Platform! 1,50,000 units published to partner Jan Aushadhi hubs.`);
   };
 
   return (
@@ -139,7 +139,7 @@ export const ManufacturerPortalScreen: React.FC<ManufacturerPortalScreenProps> =
               <span className="material-symbols-outlined text-[#006c49] text-[20px]">account_balance</span>
             </div>
             <div className="text-2xl font-display font-extrabold text-[#001026] mt-2 flex items-baseline gap-2">
-              $3,842,500 <span className="text-xs text-[#006c49] font-bold">+14.2%</span>
+              ₹3,84,25,000 <span className="text-xs text-[#006c49] font-bold">+14.2%</span>
             </div>
             <p className="text-xs text-[#44474e] mt-1">Supplied across 18 regional distribution hubs</p>
           </div>
@@ -174,7 +174,7 @@ export const ManufacturerPortalScreen: React.FC<ManufacturerPortalScreenProps> =
             <div className="text-2xl font-display font-extrabold text-[#001026] mt-2">
               18 POs
             </div>
-            <p className="text-xs text-[#44474e] mt-1">$412.8k awaiting cold-chain dispatch</p>
+            <p className="text-xs text-[#44474e] mt-1">₹41.28 Lakhs awaiting cold-chain dispatch</p>
           </div>
         </div>
 

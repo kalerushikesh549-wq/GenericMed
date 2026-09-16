@@ -1,5 +1,6 @@
 /**
  * GenericMed Enterprise & Multi-Tenant Platform Types
+ * Localized for GenericMed Bharat (India Edition)
  */
 
 export type ScreenId =
@@ -14,6 +15,8 @@ export type ScreenId =
 
 export type UserRole = 'patient' | 'pharmacist' | 'manufacturer' | 'enterprise_admin';
 
+export type Language = 'en' | 'hi' | 'mr' | 'gu' | 'ta' | 'te' | 'bn';
+
 export interface UserProfile {
   id: string;
   name: string;
@@ -25,6 +28,11 @@ export interface UserProfile {
   facilityName?: string;
   companyName?: string;
   deliveryAddress?: string;
+  pincode?: string;
+  city?: string;
+  state?: string;
+  gstin?: string;
+  cdscoLicense?: string;
   activePrescriptionsCount?: number;
   joinedDate: string;
 }
@@ -199,4 +207,3 @@ export interface ColdChainTelemetryResult {
   withinRange: boolean;
   alert: string | null;
 }
-

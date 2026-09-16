@@ -21,7 +21,7 @@ export const EnterpriseOpsScreen: React.FC<EnterpriseOpsScreenProps> = ({
   const [showPdfModal, setShowPdfModal] = useState(false);
   const [chatMessages, setChatMessages] = useState([
     { sender: 'Dr. Elena Rostova (MD)', time: '08:32 AM', text: 'Prescription issued for patient Doe. Standard hyperlipidemia protocol.' },
-    { sender: 'Dr. R. Vance (Lead Pharmacist)', time: '08:34 AM', text: 'Reviewing substitution for Atorvastatin Calcium 20mg USP grade.' }
+    { sender: 'Dr. R. Vance (Lead Pharmacist)', time: '08:34 AM', text: 'Reviewing substitution for Atorvastatin Calcium IP 20mg USP grade.' }
   ]);
   const [chatInput, setChatInput] = useState('');
 
@@ -357,7 +357,7 @@ export const EnterpriseOpsScreen: React.FC<EnterpriseOpsScreenProps> = ({
                 </div>
               </div>
               <div className="mt-3 flex items-baseline gap-2">
-                <div className="text-2xl lg:text-3xl font-display font-extrabold text-[#001026]">$1,428,950</div>
+                <div className="text-2xl lg:text-3xl font-display font-extrabold text-[#001026]">₹1,42,89,500</div>
                 <span className="text-[#006c49] text-xs font-bold flex items-center">
                   <span className="material-symbols-outlined text-[16px]">trending_up</span> +18.4%
                 </span>
@@ -377,7 +377,7 @@ export const EnterpriseOpsScreen: React.FC<EnterpriseOpsScreenProps> = ({
                 </div>
               </div>
               <div className="mt-3 flex items-baseline gap-2">
-                <div className="text-2xl lg:text-3xl font-display font-extrabold text-[#001026]">$121,460</div>
+                <div className="text-2xl lg:text-3xl font-display font-extrabold text-[#001026]">₹12,14,600</div>
                 <span className="text-[#006c49] text-xs font-bold bg-[#006c49]/15 px-2 py-0.5 rounded text-[11px]">8.5% avg</span>
               </div>
               <p className="text-[12px] text-[#44474e] mt-1.5">Settled automatically across 14 tenant hubs</p>
@@ -509,7 +509,7 @@ export const EnterpriseOpsScreen: React.FC<EnterpriseOpsScreenProps> = ({
 
                       <div className="bg-[#eff4ff]/60 p-3 rounded-lg border border-[#c4c6cf]/40">
                         <div className="text-[11px] text-[#44474e] font-semibold">PRESCRIPTION EXTRACT (RAW OCR):</div>
-                        <div className="text-base font-display text-[#001026] font-bold mt-1">Rx: Lipitor 20mg</div>
+                        <div className="text-base font-display text-[#001026] font-bold mt-1">Rx: Storvas 20 (Lipitor)</div>
                         <div className="text-[13px] text-[#0b1c30] mt-0.5">
                           Sig: 1 tablet orally once daily at bedtime for hyperlipidemia. Dispense: #30 (Thirty). Refills: 3
                         </div>
@@ -563,13 +563,13 @@ export const EnterpriseOpsScreen: React.FC<EnterpriseOpsScreenProps> = ({
                       <span className="text-[11px] text-[#74777f] font-mono">NDC: 0071-0156-23</span>
                     </div>
                     <div>
-                      <h4 className="text-base font-display font-bold text-[#0b1c30]">Lipitor 20mg</h4>
-                      <p className="text-[12px] text-[#44474e]">Pfizer Pharmaceuticals • Film-coated</p>
+                      <h4 className="text-base font-display font-bold text-[#0b1c30]">Storvas 20 (Lipitor)</h4>
+                      <p className="text-[12px] text-[#44474e]">Sun Pharma / Pfizer • Film-coated</p>
                     </div>
                     <div className="pt-2 border-t border-[#c4c6cf]/40">
                       <div className="text-[11px] text-[#44474e]">Standard Pharmacy Cash Price</div>
                       <div className="text-lg font-display font-bold text-[#74777f] line-through">
-                        $98.50 <span className="text-[12px] font-normal text-[#44474e]">/ 30 days</span>
+                        ₹485.00 <span className="text-[12px] font-normal text-[#44474e]">/ 30 days</span>
                       </div>
                     </div>
                     <div className="text-[11px] text-[#44474e] bg-[#e5eeff] p-2 rounded-lg">
@@ -580,7 +580,7 @@ export const EnterpriseOpsScreen: React.FC<EnterpriseOpsScreenProps> = ({
                   {/* Algorithmic Bio-Equivalent Generic Card */}
                   <div className="p-4 rounded-xl border-2 border-[#006c49] bg-white shadow-xs space-y-3 relative overflow-hidden">
                     <div className="absolute top-0 right-0 bg-[#006c49] text-white text-[10px] font-bold px-3 py-0.5 rounded-bl-lg">
-                      FDA TIER-A CERTIFIED
+                      CDSCO BIO-EQUIVALENT
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#006c49]/15 text-[#006c49] border border-[#006c49]/30">
@@ -588,13 +588,13 @@ export const EnterpriseOpsScreen: React.FC<EnterpriseOpsScreenProps> = ({
                       </span>
                     </div>
                     <div>
-                      <h4 className="text-base font-display font-bold text-[#001026]">Atorvastatin Calcium 20mg</h4>
+                      <h4 className="text-base font-display font-bold text-[#001026]">Atorvastatin Calcium IP 20mg</h4>
                       <p className="text-[12px] text-[#44474e]">USP Grade • Cipla / Teva Multi-Source</p>
                     </div>
                     <div className="pt-2 border-t border-[#c4c6cf]/40">
                       <div className="text-[11px] text-[#006c49] font-bold">GenericMed Platform Wholesale Price</div>
                       <div className="text-lg font-display font-bold text-[#006c49]">
-                        $14.20 <span className="text-[12px] font-normal text-[#44474e]">/ 30 days</span>
+                        ₹78.50 <span className="text-[12px] font-normal text-[#44474e]">/ 30 days</span>
                       </div>
                     </div>
                     <div className="text-[11px] text-[#001026] bg-[#006c49]/10 p-2 rounded-lg border border-[#006c49]/20">
@@ -773,7 +773,7 @@ export const EnterpriseOpsScreen: React.FC<EnterpriseOpsScreenProps> = ({
                           </div>
                         </td>
                         <td className="px-4 py-3.5 font-semibold text-[#006c49]">{hub.platformTakeRate}%</td>
-                        <td className="px-4 py-3.5 font-bold text-[#0b1c30]">${hub.monthlyGmv.toLocaleString()}</td>
+                        <td className="px-4 py-3.5 font-bold text-[#0b1c30]">₹{hub.monthlyGmv.toLocaleString()}</td>
                         <td className="px-6 py-3.5 text-right">
                           <div className="flex items-center justify-end gap-2">
                             <span className="px-2 py-0.5 text-[10px] font-bold bg-[#006c49]/15 text-[#006c49] rounded">ONLINE</span>

@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ScreenId, UserRole, UserProfile } from '../../types';
 import { DEMO_USERS } from '../../data/mockData';
+import { useLanguage } from '../../i18n/LanguageContext';
+import { formatIndianMobile, isValidIndianMobile } from '../../utils/formatters';
 import { 
   User, 
   Lock, 
@@ -15,13 +17,13 @@ import {
   CheckCircle2, 
   ArrowRight, 
   Sparkles, 
-  FileText,
-  MapPin,
-  HelpCircle,
-  KeyRound,
-  LogOut,
+  MapPin, 
+  LogOut, 
   ChevronRight,
-  Stethoscope
+  RefreshCw,
+  Zap,
+  Smartphone,
+  Check
 } from 'lucide-react';
 
 interface AuthScreenProps {
@@ -43,33 +45,55 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   onShowToast,
   isMobileFrame = false
 }) => {
+  const { t } = useLanguage();
+
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [loginMethod, setLoginMethod] = useState<'otp' | 'password'>('otp');
   const [selectedRole, setSelectedRole] = useState<UserRole>('patient');
   const [showPassword, setShowPassword] = useState(false);
   const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
 
-  // Form states for Login
-  const [loginIdentifier, setLoginIdentifier] = useState('johnathan.doe@gmail.com');
-  const [loginPassword, setLoginPassword] = useState('••••••••••');
+  // OTP Login states
+  const [otpMobile, setOtpMobile] = useState('9823456789');
+  const [otpSent, setOtpSent] = useState(false);
+  const [generatedOtp, setGeneratedOtp] = useState('');
+  const [enteredOtp, setEnteredOtp] = useState('');
+  const [resendTimer, setResendTimer] = useState(0);
+
+  // Password Login states
+  const [loginIdentifier, setLoginIdentifier] = useState('rahul.sharma@gmail.com');
+  const [loginPassword, setLoginPassword] = useState('password123');
   const [rememberMe, setRememberMe] = useState(true);
 
-  // Form states for Register
+  // Register Form states (Indian format)
   const [regName, setRegName] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regPhone, setRegPhone] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
+  const [regCity, setRegCity] = useState('Pune');
+  const [regState, setRegState] = useState('Maharashtra');
+  const [regPincode, setRegPincode] = useState('411016');
   const [regLicense, setRegLicense] = useState('');
   const [regFacility, setRegFacility] = useState('');
   const [regAddress, setRegAddress] = useState('');
   const [agreeTerms, setAgreeTerms] = useState(true);
-  const [enable2FA, setEnable2FA] = useState(true);
 
-  // Role info definition
+  // Resend OTP countdown timer
+  useEffect(() => {
+    if (resendTimer <= 0) return;
+    const timer = setInterval(() => {
+      setResendTimer(prev => prev - 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resendTimer]);
+
+  // Roles definition
   const rolesList: {
     id: UserRole;
-    title: string;
+    titleKey: string;
+    defaultTitle: string;
     description: string;
     icon: React.ReactNode;
     badge: string;
@@ -77,81 +101,158 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   }[] = [
     {
       id: 'patient',
-      title: 'Patient / Consumer',
-      description: 'Search bio-equivalents, compare drug prices, and track 35-min delivery.',
+      titleKey: 'patientRole',
+      defaultTitle: 'Patient / Citizen',
+      description: 'Search Jan Aushadhi generic substitutes and track 35-min delivery.',
       icon: <User className="w-4 h-4 text-[#006c49]" />,
-      badge: 'Save 85%',
+      badge: 'Save 80%',
       defaultTargetScreen: 'customer-app'
     },
     {
       id: 'pharmacist',
-      title: 'Licensed Pharmacist',
-      description: 'Dispensary workbench, batch scan validation, and courier handover bay.',
+      titleKey: 'pharmacistRole',
+      defaultTitle: 'Licensed Pharmacist',
+      description: 'Jan Aushadhi dispensary, batch validation, and doorstep handover.',
       icon: <Store className="w-4 h-4 text-[#0b2545]" />,
-      badge: 'RPh / PharmD',
+      badge: 'D.Pharm / RPh',
       defaultTargetScreen: 'pharmacy-portal'
     },
     {
       id: 'manufacturer',
-      title: 'Pharma Manufacturer',
-      description: 'B2B supply allocation, Orange Book compliance, and QA release dossiers.',
+      titleKey: 'manufacturerRole',
+      defaultTitle: 'Pharma Manufacturer',
+      description: 'B2B supply allocation, CDSCO compliance, and cGMP release dossiers.',
       icon: <Factory className="w-4 h-4 text-[#6b4700]" />,
-      badge: 'cGMP / FDA',
+      badge: 'CDSCO / cGMP',
       defaultTargetScreen: 'manufacturer-portal'
     },
     {
       id: 'enterprise_admin',
-      title: 'Enterprise Admin',
-      description: 'Super-admin multi-tenant matrix, clinical review, and compliance audit.',
+      titleKey: 'adminRole',
+      defaultTitle: 'Enterprise Admin',
+      description: 'State regulatory gateway, clinical reviews, and audit trails.',
       icon: <Building2 className="w-4 h-4 text-[#ba1a1a]" />,
-      badge: 'SOC-2 TIER III',
+      badge: 'CDSCO REG',
       defaultTargetScreen: 'enterprise-ops'
     }
   ];
 
-  // Quick fill handler for demo users
+  // Quick fill handler for Indian demo users
   const handleQuickFill = (user: UserProfile) => {
     setSelectedRole(user.role);
     setLoginIdentifier(user.email);
     setLoginPassword('password123');
+    const cleanPhone = user.phone.replace(/\D/g, '').slice(-10);
+    setOtpMobile(cleanPhone || '9823456789');
     onShowToast(`Credentials loaded for ${user.name} (${user.role.replace('_', ' ').toUpperCase()})`);
   };
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!loginIdentifier.trim()) {
-      onShowToast('Please enter your email or phone number');
+  // Send OTP handler
+  const handleSendOtp = () => {
+    const cleanMobile = otpMobile.replace(/\D/g, '');
+    if (!cleanMobile || cleanMobile.length !== 10) {
+      onShowToast('Please enter a valid 10-digit Indian mobile number (e.g. 9823456789)');
       return;
     }
 
-    // Match existing demo user or create session user
+    // Generate random 6-digit OTP
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    setGeneratedOtp(code);
+    setOtpSent(true);
+    setResendTimer(30);
+    setEnteredOtp('');
+
+    // Simulate real SMS dispatch via toast
+    onShowToast(`📲 SMS to +91 ${cleanMobile}: Your GenericMed Bharat OTP is [ ${code} ]. Valid for 10 mins.`);
+  };
+
+  // Auto-fill OTP helper for fast testing
+  const handleAutoFillOtp = () => {
+    if (generatedOtp) {
+      setEnteredOtp(generatedOtp);
+      onShowToast(`Auto-filled OTP: ${generatedOtp}`);
+    }
+  };
+
+  // Verify OTP and Login
+  const handleVerifyOtp = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!enteredOtp.trim()) {
+      onShowToast('Please enter the 6-digit OTP received via SMS');
+      return;
+    }
+
+    if (enteredOtp.trim() !== generatedOtp) {
+      onShowToast('Incorrect OTP. Please enter the OTP displayed in the SMS alert or click Auto-fill.');
+      return;
+    }
+
+    // Find matching demo user by phone or role
     const matched = DEMO_USERS.find(u => 
-      u.email.toLowerCase() === loginIdentifier.toLowerCase() ||
-      u.role === selectedRole
+      u.phone.includes(otpMobile) || u.role === selectedRole
     );
 
     const userToLogin: UserProfile = matched || {
-      id: `user-${Date.now()}`,
-      name: loginIdentifier.split('@')[0] || 'GenericMed User',
-      email: loginIdentifier,
-      phone: '+1 (718) 555-0100',
+      id: `user-in-${Date.now()}`,
+      name: `Citizen +91-${otpMobile.slice(-4)}`,
+      email: `${otpMobile}@genericmed.in`,
+      phone: formatIndianMobile(otpMobile),
       role: selectedRole,
+      city: 'Pune',
+      state: 'Maharashtra',
+      pincode: '411016',
+      deliveryAddress: 'Flat 402, Shivneri Heights, SB Road, Shivaji Nagar, Pune, Maharashtra 411016',
       joinedDate: 'Today'
     };
 
     onLogin(userToLogin);
-    onShowToast(`Welcome back, ${userToLogin.name}! Authenticated as ${userToLogin.role}.`);
+    onShowToast(`OTP Verified! Welcome to GenericMed Bharat, ${userToLogin.name}.`);
 
-    // Direct user to their native screen
     const targetRole = rolesList.find(r => r.id === userToLogin.role);
     if (targetRole) {
       onNavigateScreen(targetRole.defaultTargetScreen);
     }
   };
 
+  // Password Login submit
+  const handlePasswordLoginSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!loginIdentifier.trim()) {
+      onShowToast('Please enter your email or mobile number');
+      return;
+    }
+
+    const matched = DEMO_USERS.find(u => 
+      u.email.toLowerCase() === loginIdentifier.toLowerCase() ||
+      u.phone.includes(loginIdentifier) ||
+      u.role === selectedRole
+    );
+
+    const userToLogin: UserProfile = matched || {
+      id: `user-in-${Date.now()}`,
+      name: loginIdentifier.split('@')[0] || 'GenericMed User',
+      email: loginIdentifier,
+      phone: '+91 98234 56789',
+      role: selectedRole,
+      city: 'Pune',
+      state: 'Maharashtra',
+      pincode: '411016',
+      joinedDate: 'Today'
+    };
+
+    onLogin(userToLogin);
+    onShowToast(`Welcome back, ${userToLogin.name}! Authenticated as ${userToLogin.role}.`);
+
+    const targetRole = rolesList.find(r => r.id === userToLogin.role);
+    if (targetRole) {
+      onNavigateScreen(targetRole.defaultTargetScreen);
+    }
+  };
+
+  // Register Form submit
   const handleRegisterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!regName.trim() || !regEmail.trim() || !regPassword.trim()) {
+    if (!regName.trim() || !regPhone.trim() || !regPassword.trim()) {
       onShowToast('Please complete all required fields');
       return;
     }
@@ -160,19 +261,22 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
       return;
     }
     if (!agreeTerms) {
-      onShowToast('Please accept the HIPAA & Terms of Service agreement');
+      onShowToast('Please accept the Jan Aushadhi & CDSCO terms of service');
       return;
     }
 
     const newUser: UserProfile = {
       id: `user-reg-${Date.now()}`,
       name: regName,
-      email: regEmail,
-      phone: regPhone || '+1 (718) 555-0199',
+      email: regEmail || `${regPhone}@genericmed.in`,
+      phone: formatIndianMobile(regPhone),
       role: selectedRole,
       licenseNumber: regLicense || undefined,
       facilityName: regFacility || undefined,
-      deliveryAddress: regAddress || '742 Evergreen Terr, Brooklyn NY 11201',
+      city: regCity,
+      state: regState,
+      pincode: regPincode,
+      deliveryAddress: regAddress || `${regCity}, ${regState} - ${regPincode}`,
       activePrescriptionsCount: selectedRole === 'patient' ? 1 : 0,
       joinedDate: 'Just now'
     };
@@ -190,34 +294,19 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
     e.preventDefault();
     if (!resetEmail.trim()) return;
     setShowForgotPasswordModal(false);
-    onShowToast(`Password recovery link securely dispatched to ${resetEmail}`);
+    onShowToast(`Password recovery OTP securely dispatched to ${resetEmail}`);
     setResetEmail('');
   };
-
-  // Password strength calculation
-  const getPasswordStrength = (pwd: string) => {
-    if (!pwd) return { score: 0, label: 'Empty', color: 'bg-slate-200' };
-    let s = 0;
-    if (pwd.length >= 8) s += 1;
-    if (/[A-Z]/.test(pwd)) s += 1;
-    if (/[0-9]/.test(pwd)) s += 1;
-    if (/[^A-Za-z0-9]/.test(pwd)) s += 1;
-    if (s <= 1) return { score: 1, label: 'Weak', color: 'bg-red-500' };
-    if (s <= 3) return { score: 2, label: 'Good', color: 'bg-amber-500' };
-    return { score: 3, label: 'Strong', color: 'bg-[#006c49]' };
-  };
-
-  const pwdStrength = getPasswordStrength(regPassword);
 
   const mainAuthContent = (
     <div className="min-h-[calc(100vh-56px)] flex flex-col justify-center bg-[#f8f9ff] text-[#0b1c30] p-3 sm:p-5 lg:p-6 selection:bg-[#6cf8bb] selection:text-[#002113]">
       <div className="max-w-5xl w-full mx-auto my-auto">
-        {/* If user is ALREADY logged in, show Profile Summary with direct dashboard jump */}
+        {/* If user is ALREADY logged in */}
         {currentUser ? (
           <div className="bg-white rounded-3xl border border-[#c4c6cf]/70 shadow-xl overflow-hidden max-w-2xl mx-auto p-5 sm:p-8 space-y-5">
             <div className="flex items-center justify-between border-b border-[#c4c6cf]/50 pb-4">
               <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-2xl bg-[#001026] text-[#6cf8bb] flex items-center justify-center font-bold text-lg shadow-md">
+                <div className="w-12 h-12 rounded-2xl bg-[#001026] text-[#6cf8bb] flex items-center justify-center font-bold text-xl shadow-md">
                   {currentUser.name.charAt(0)}
                 </div>
                 <div>
@@ -227,7 +316,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                       {currentUser.role.replace('_', ' ')}
                     </span>
                   </div>
-                  <p className="text-xs text-[#44474e]">{currentUser.email}</p>
+                  <p className="text-xs text-[#44474e]">{currentUser.email} • {currentUser.phone}</p>
                 </div>
               </div>
 
@@ -239,11 +328,11 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 text-xs font-semibold transition-colors"
               >
                 <LogOut className="w-3.5 h-3.5" />
-                Sign Out
+                {t('signOut', 'Sign Out')}
               </button>
             </div>
 
-            {/* Profile Quick Details */}
+            {/* Profile Quick Details (Indian Format) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
               <div className="p-2.5 bg-[#eff4ff] rounded-xl border border-[#c4c6cf]/40 space-y-0.5">
                 <span className="text-[10px] font-bold text-[#74777f] uppercase">Account ID</span>
@@ -251,20 +340,37 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
               </div>
 
               <div className="p-2.5 bg-[#eff4ff] rounded-xl border border-[#c4c6cf]/40 space-y-0.5">
-                <span className="text-[10px] font-bold text-[#74777f] uppercase">Phone Verified</span>
-                <div className="font-semibold text-[#001026]">{currentUser.phone}</div>
+                <span className="text-[10px] font-bold text-[#74777f] uppercase">Verified Mobile (+91)</span>
+                <div className="font-semibold text-[#001026] flex items-center gap-1.5">
+                  <span className="text-xs">🇮🇳</span>
+                  <span>{currentUser.phone}</span>
+                </div>
               </div>
+
+              {currentUser.city && (
+                <div className="p-2.5 bg-[#eff4ff] rounded-xl border border-[#c4c6cf]/40 space-y-0.5">
+                  <span className="text-[10px] font-bold text-[#74777f] uppercase">Region / State</span>
+                  <div className="font-semibold text-[#001026]">{currentUser.city}, {currentUser.state || 'India'}</div>
+                </div>
+              )}
+
+              {currentUser.pincode && (
+                <div className="p-2.5 bg-[#eff4ff] rounded-xl border border-[#c4c6cf]/40 space-y-0.5">
+                  <span className="text-[10px] font-bold text-[#74777f] uppercase">PIN Code</span>
+                  <div className="font-mono font-bold text-[#006c49]">{currentUser.pincode}</div>
+                </div>
+              )}
 
               {currentUser.licenseNumber && (
                 <div className="p-2.5 bg-[#eff4ff] rounded-xl border border-[#c4c6cf]/40 space-y-0.5 sm:col-span-2">
-                  <span className="text-[10px] font-bold text-[#74777f] uppercase">Verified License / NPI</span>
+                  <span className="text-[10px] font-bold text-[#74777f] uppercase">CDSCO / Pharmacy Council License</span>
                   <div className="font-mono font-bold text-[#006c49]">{currentUser.licenseNumber}</div>
                 </div>
               )}
 
               {currentUser.deliveryAddress && (
                 <div className="p-2.5 bg-[#eff4ff] rounded-xl border border-[#c4c6cf]/40 space-y-0.5 sm:col-span-2">
-                  <span className="text-[10px] font-bold text-[#74777f] uppercase">Default Delivery Address</span>
+                  <span className="text-[10px] font-bold text-[#74777f] uppercase">Default Indian Delivery Address</span>
                   <div className="font-medium text-[#001026] flex items-center gap-1.5 truncate">
                     <MapPin className="w-3.5 h-3.5 text-[#006c49] flex-shrink-0" />
                     <span className="truncate">{currentUser.deliveryAddress}</span>
@@ -283,7 +389,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                 >
                   <div className="flex items-center gap-2">
                     <User className="w-4 h-4 text-[#006c49]" />
-                    <span>Customer Medicine Search</span>
+                    <span>Jan Aushadhi Medicine Search</span>
                   </div>
                   <ChevronRight className="w-4 h-4 text-[#74777f] group-hover:translate-x-0.5 transition-transform" />
                 </button>
@@ -294,7 +400,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                 >
                   <div className="flex items-center gap-2">
                     <Store className="w-4 h-4 text-[#0b2545]" />
-                    <span>Pharmacy Fulfillment Workbench</span>
+                    <span>Jan Aushadhi Dispensary Hub</span>
                   </div>
                   <ChevronRight className="w-4 h-4 text-[#74777f] group-hover:translate-x-0.5 transition-transform" />
                 </button>
@@ -305,7 +411,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                 >
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-[#006c49]" />
-                    <span>Active Order #88219 Status</span>
+                    <span>Track Live Delivery (PIN: 8410)</span>
                   </div>
                   <ChevronRight className="w-4 h-4 text-[#74777f] group-hover:translate-x-0.5 transition-transform" />
                 </button>
@@ -316,7 +422,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                 >
                   <div className="flex items-center gap-2">
                     <Building2 className="w-4 h-4 text-[#ba1a1a]" />
-                    <span>Enterprise Operations Gateway</span>
+                    <span>CDSCO Enterprise Gateway</span>
                   </div>
                   <ChevronRight className="w-4 h-4 text-[#74777f] group-hover:translate-x-0.5 transition-transform" />
                 </button>
@@ -338,11 +444,10 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
             </div>
           </div>
         ) : (
-          /* NOT LOGGED IN: Split Desktop Layout & Responsive Mobile View */
-          <div className="grid grid-cols-1 lg:grid-cols-12 bg-white rounded-3xl border border-[#c4c6cf]/80 shadow-xl overflow-hidden lg:h-[630px] lg:max-h-[86vh]">
-            {/* LEFT SIDEBAR: Brand & Clinical Highlights (Visible on desktop) */}
+          /* NOT LOGGED IN: Split Layout */
+          <div className="grid grid-cols-1 lg:grid-cols-12 bg-white rounded-3xl border border-[#c4c6cf]/80 shadow-xl overflow-hidden min-h-[620px]">
+            {/* LEFT SIDEBAR: Brand & Clinical Highlights */}
             <div className="lg:col-span-5 bg-[#001026] text-white p-5 lg:p-6 flex flex-col justify-between relative overflow-hidden">
-              {/* Subtle background glow */}
               <div className="absolute top-0 right-0 w-64 h-64 bg-[#006c49]/20 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
               <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#6cf8bb]/10 rounded-full blur-3xl pointer-events-none -ml-20 -mb-20"></div>
 
@@ -354,103 +459,89 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                       <span className="material-symbols-outlined text-[20px]">health_and_safety</span>
                     </div>
                     <div>
-                      <span className="font-display font-extrabold text-lg text-white tracking-tight">GenericMed</span>
+                      <span className="font-display font-extrabold text-lg text-white tracking-tight flex items-center gap-1.5">
+                        <span>GenericMed Bharat</span>
+                        <span className="text-sm">🇮🇳</span>
+                      </span>
                       <span className="block text-[9px] font-mono text-[#6cf8bb] font-semibold">
-                        FDA BIO-EQUIVALENCE PORTAL
+                        PMBJP & CDSCO BIO-EQUIVALENCE PORTAL
                       </span>
                     </div>
                   </div>
-
-                  <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-[#006c49]/30 text-[#6cf8bb] border border-[#006c49]/60">
-                    SOC-2 • HIPAA
-                  </span>
                 </div>
 
-                {/* Main Headline */}
-                <div className="space-y-1.5 pt-1">
-                  <h1 className="font-display font-bold text-xl sm:text-2xl text-white leading-tight">
-                    Same active molecule.<br />
-                    <span className="text-[#6cf8bb]">Up to 85% lower cost.</span>
+                <div className="space-y-1 pt-1">
+                  <h1 className="font-display font-bold text-xl lg:text-2xl text-white leading-tight">
+                    Affordable Generic Healthcare for 1.4 Billion Citizens
                   </h1>
-                  <p className="text-xs text-slate-300 leading-relaxed max-w-sm">
-                    Access certified FDA Orange Book bio-equivalent medicines dispensed by licensed neighborhood pharmacies and delivered in 35 minutes.
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Same active pharmaceutical ingredients (APIs), identical therapeutic efficacy, up to 80% cost savings compared to branded drugs.
                   </p>
                 </div>
 
-                {/* Key Pillars / Badges - Compact for web view height */}
-                <div className="space-y-2 pt-1">
-                  <div className="flex items-center gap-2.5 p-2 rounded-xl bg-white/5 border border-white/10">
-                    <div className="w-7 h-7 rounded-lg bg-[#006c49]/30 text-[#6cf8bb] flex items-center justify-center flex-shrink-0">
-                      <ShieldCheck className="w-3.5 h-3.5" />
-                    </div>
-                    <div className="text-xs">
-                      <div className="font-bold text-white text-[11px]">FDA Therapeutic Equivalence (AB)</div>
-                      <p className="text-slate-400 text-[10px]">Identical AUC rate &amp; clinical efficacy to branded originators.</p>
-                    </div>
+                {/* Indian Trust Badges */}
+                <div className="space-y-2 pt-1 text-xs">
+                  <div className="flex items-center gap-2 text-slate-200">
+                    <ShieldCheck className="w-4 h-4 text-[#6cf8bb] flex-shrink-0" />
+                    <span>Pradhan Mantri Bhartiya Janaushadhi Pariyojana (PMBJP)</span>
                   </div>
-
-                  <div className="flex items-center gap-2.5 p-2 rounded-xl bg-white/5 border border-white/10">
-                    <div className="w-7 h-7 rounded-lg bg-[#006c49]/30 text-[#6cf8bb] flex items-center justify-center flex-shrink-0">
-                      <Sparkles className="w-3.5 h-3.5" />
-                    </div>
-                    <div className="text-xs">
-                      <div className="font-bold text-white text-[11px]">AI Prescription OCR Scanner</div>
-                      <p className="text-slate-400 text-[10px]">Instant salt extraction from paper doctor notes in seconds.</p>
-                    </div>
+                  <div className="flex items-center gap-2 text-slate-200">
+                    <CheckCircle2 className="w-4 h-4 text-[#6cf8bb] flex-shrink-0" />
+                    <span>CDSCO Form 20/21 Verified Quality Standards</span>
                   </div>
+                  <div className="flex items-center gap-2 text-slate-200">
+                    <Zap className="w-4 h-4 text-[#6cf8bb] flex-shrink-0" />
+                    <span>Instant SMS OTP Login with +91 Mobile Support</span>
+                  </div>
+                </div>
 
-                  <div className="flex items-center gap-2.5 p-2 rounded-xl bg-white/5 border border-white/10">
-                    <div className="w-7 h-7 rounded-lg bg-[#006c49]/30 text-[#6cf8bb] flex items-center justify-center flex-shrink-0">
-                      <KeyRound className="w-3.5 h-3.5" />
-                    </div>
-                    <div className="text-xs">
-                      <div className="font-bold text-white text-[11px]">Cryptographic Tamper-Tape</div>
-                      <p className="text-slate-400 text-[10px]">Chain-of-custody sealed parcel with 4-digit door PIN handover.</p>
-                    </div>
+                {/* Indian Quick Demo Persona Chips */}
+                <div className="pt-2 border-t border-white/10 space-y-1.5">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    {t('quickLoginAs', 'Quick Demo Sign-In as:')}
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {DEMO_USERS.map((user) => (
+                      <button
+                        key={user.id}
+                        type="button"
+                        onClick={() => handleQuickFill(user)}
+                        className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-left transition-all group"
+                      >
+                        <div className="font-bold text-white text-[11px] truncate flex items-center gap-1">
+                          <span className="text-[10px]">🇮🇳</span>
+                          <span className="truncate">{user.name.split(',')[0]}</span>
+                        </div>
+                        <div className="text-[10px] text-[#6cf8bb] capitalize">{user.role.replace('_', ' ')}</div>
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>
 
-              {/* Bottom Quick Test Credential Trigger */}
-              <div className="relative z-10 pt-3 mt-2 border-t border-white/10">
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center justify-between">
-                  <span>1-Click Demo Profiles:</span>
-                  <span className="text-[#6cf8bb] text-[9px]">Click to auto-fill</span>
-                </div>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {DEMO_USERS.map((user) => (
-                    <button
-                      key={user.id}
-                      type="button"
-                      onClick={() => handleQuickFill(user)}
-                      className="p-1.5 bg-white/10 hover:bg-white/20 text-left rounded-lg border border-white/10 transition-colors group"
-                    >
-                      <div className="text-[11px] font-bold text-white group-hover:text-[#6cf8bb] truncate">
-                        {user.name.split(' ')[0]} ({user.role.replace('_', ' ')})
-                      </div>
-                      <div className="text-[9px] text-slate-400 truncate">{user.email}</div>
-                    </button>
-                  ))}
-                </div>
+              {/* Bottom footer badge */}
+              <div className="relative z-10 pt-3 border-t border-white/10 text-[10px] text-slate-400 flex items-center justify-between">
+                <span>National Digital Health Mission (ABDM)</span>
+                <span className="font-mono text-[#6cf8bb]">256-Bit SSL India</span>
               </div>
             </div>
 
-            {/* RIGHT SIDEBAR: The Interactive Form (Login or Register) */}
-            <div className="lg:col-span-7 p-4 sm:p-6 flex flex-col justify-between overflow-y-auto custom-scrollbar">
+            {/* RIGHT COLUMN: Interactive Dual Login Form (OTP / Password) */}
+            <div className="lg:col-span-7 p-5 lg:p-7 flex flex-col justify-between overflow-y-auto">
               <div>
-                {/* Mode Switcher Tabs (Sign In vs Register) */}
-                <div className="flex items-center justify-between border-b border-[#c4c6cf]/60 pb-2.5 mb-4">
-                  <div className="flex items-center gap-2">
+                {/* Top Toggle: Sign In vs Create Account */}
+                <div className="flex items-center justify-between border-b border-[#c4c6cf]/40 pb-3 mb-4">
+                  <div className="flex items-center gap-1 bg-[#f8f9ff] p-1 rounded-2xl border border-[#c4c6cf]/50">
                     <button
                       type="button"
                       onClick={() => setAuthMode('login')}
                       className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
                         authMode === 'login'
                           ? 'bg-[#001026] text-white shadow-sm'
-                          : 'bg-[#eff4ff] text-[#44474e] hover:text-[#001026]'
+                          : 'text-[#44474e] hover:text-[#001026]'
                       }`}
                     >
-                      Sign In
+                      {t('signIn', 'Sign In')}
                     </button>
                     <button
                       type="button"
@@ -458,10 +549,10 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                       className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
                         authMode === 'register'
                           ? 'bg-[#001026] text-white shadow-sm'
-                          : 'bg-[#eff4ff] text-[#44474e] hover:text-[#001026]'
+                          : 'text-[#44474e] hover:text-[#001026]'
                       }`}
                     >
-                      Create Account
+                      {t('createAccount', 'Create Account')}
                     </button>
                   </div>
 
@@ -470,23 +561,23 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                     onClick={() => onNavigateScreen('customer-app')}
                     className="text-xs text-[#74777f] hover:text-[#001026] font-semibold flex items-center gap-1"
                   >
-                    <span>Browse as Guest</span>
+                    <span>Browse Catalog</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
 
                 {/* Role Selector Header */}
-                <div className="space-y-1.5 mb-3.5">
+                <div className="space-y-1.5 mb-4">
                   <div className="flex items-center justify-between">
                     <label className="text-[11px] font-bold text-[#001026] uppercase tracking-wider">
                       Select Access Persona / Role:
                     </label>
                     <span className="text-[10px] text-[#006c49] font-semibold">
-                      {rolesList.find(r => r.id === selectedRole)?.title}
+                      {rolesList.find(r => r.id === selectedRole)?.defaultTitle}
                     </span>
                   </div>
 
-                  {/* 4 Role Selector Cards - Compact */}
+                  {/* 4 Role Selector Cards */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                     {rolesList.map((role) => {
                       const isSelected = selectedRole === role.id;
@@ -510,7 +601,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                             </span>
                           </div>
                           <div className="font-bold text-[10px] text-[#001026] leading-tight">
-                            {role.title}
+                            {t(role.titleKey, role.defaultTitle)}
                           </div>
                         </button>
                       );
@@ -518,289 +609,349 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                   </div>
                 </div>
 
-                {/* FORM VIEW: LOGIN */}
+                {/* AUTH MODE: LOGIN */}
                 {authMode === 'login' && (
-                  <form onSubmit={handleLoginSubmit} className="space-y-3">
-                    <div>
-                      <label className="block text-[11px] font-semibold text-[#0b1c30] mb-1">
-                        Email Address or Mobile Number:
-                      </label>
-                      <div className="relative">
-                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[#74777f]">
-                          <Mail className="w-3.5 h-3.5" />
-                        </span>
+                  <div className="space-y-4">
+                    {/* Method Selector Tabs: Mobile OTP vs Password */}
+                    <div className="grid grid-cols-2 gap-2 p-1 bg-[#eff4ff] rounded-xl border border-[#c4c6cf]/50">
+                      <button
+                        type="button"
+                        onClick={() => setLoginMethod('otp')}
+                        className={`py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                          loginMethod === 'otp'
+                            ? 'bg-white text-[#001026] shadow-sm border border-[#c4c6cf]/60'
+                            : 'text-[#44474e] hover:text-[#001026]'
+                        }`}
+                      >
+                        <Smartphone className="w-3.5 h-3.5 text-[#006c49]" />
+                        <span>{t('loginWithOtp', 'Login with Mobile OTP')}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setLoginMethod('password')}
+                        className={`py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                          loginMethod === 'password'
+                            ? 'bg-white text-[#001026] shadow-sm border border-[#c4c6cf]/60'
+                            : 'text-[#44474e] hover:text-[#001026]'
+                        }`}
+                      >
+                        <Lock className="w-3.5 h-3.5 text-[#0b2545]" />
+                        <span>{t('loginWithPassword', 'Login with Password')}</span>
+                      </button>
+                    </div>
+
+                    {/* METHOD 1: LOGIN WITH MOBILE OTP */}
+                    {loginMethod === 'otp' && (
+                      <form onSubmit={handleVerifyOtp} className="space-y-3.5">
+                        <div>
+                          <label className="block text-[11px] font-semibold text-[#0b1c30] mb-1">
+                            {t('enterMobileNumber', 'Enter 10-Digit Mobile Number')}:
+                          </label>
+                          <div className="flex gap-2">
+                            <div className="relative flex-1">
+                              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-xs font-bold text-[#001026]">
+                                <span>🇮🇳 +91</span>
+                              </span>
+                              <input
+                                type="tel"
+                                maxLength={10}
+                                required
+                                value={otpMobile}
+                                onChange={(e) => {
+                                  const val = e.target.value.replace(/\D/g, '');
+                                  setOtpMobile(val);
+                                }}
+                                placeholder="9823456789"
+                                className="w-full pl-16 pr-3 py-2 bg-[#f8f9ff] border border-[#c4c6cf] rounded-xl text-xs font-mono font-bold text-[#0b1c30] focus:ring-2 focus:ring-[#006c49] focus:bg-white focus:outline-none transition-all"
+                              />
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={handleSendOtp}
+                              disabled={resendTimer > 0}
+                              className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all flex-shrink-0 ${
+                                resendTimer > 0
+                                  ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
+                                  : 'bg-[#006c49] hover:bg-[#005237] text-white shadow-xs'
+                              }`}
+                            >
+                              <RefreshCw className={`w-3.5 h-3.5 ${resendTimer > 0 ? 'animate-spin' : ''}`} />
+                              <span>{resendTimer > 0 ? `${resendTimer}s` : (otpSent ? t('resendOtp', 'Resend OTP') : t('getOtp', 'Get OTP'))}</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* OTP Input Fields (Rendered once OTP is dispatched) */}
+                        {otpSent && (
+                          <div className="p-3 bg-[#e6f7ef] rounded-2xl border border-[#006c49]/40 space-y-2.5 animate-fadeIn">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[11px] font-bold text-[#006c49]">
+                                {t('otpSentTo', 'OTP sent to')}: +91 {otpMobile}
+                              </span>
+                              {generatedOtp && (
+                                <button
+                                  type="button"
+                                  onClick={handleAutoFillOtp}
+                                  className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#006c49] text-white hover:bg-[#005237] transition-all flex items-center gap-1"
+                                  title="Click to automatically fill code"
+                                >
+                                  <Zap className="w-3 h-3 text-[#6cf8bb]" />
+                                  <span>{t('autoFillOtp', 'Auto-fill')} ({generatedOtp})</span>
+                                </button>
+                              )}
+                            </div>
+
+                            <div className="relative">
+                              <input
+                                type="text"
+                                maxLength={6}
+                                required
+                                value={enteredOtp}
+                                onChange={(e) => setEnteredOtp(e.target.value.replace(/\D/g, ''))}
+                                placeholder="Enter 6-digit OTP (e.g. 482910)"
+                                className="w-full text-center tracking-[0.4em] font-mono text-base font-extrabold py-2 bg-white border-2 border-[#006c49] rounded-xl text-[#001026] focus:ring-2 focus:ring-[#006c49] focus:outline-none"
+                              />
+                            </div>
+
+                            <div className="text-[10px] text-[#44474e] flex items-center justify-between">
+                              <span>Valid for 10 minutes</span>
+                              <span className="text-[#006c49] font-semibold">Test Code: {generatedOtp}</span>
+                            </div>
+
+                            <button
+                              type="submit"
+                              className="w-full py-2.5 px-4 bg-[#001026] hover:bg-[#0b2545] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-all"
+                            >
+                              <span>{t('verifyOtp', 'Verify OTP & Sign In')}</span>
+                              <ArrowRight className="w-3.5 h-3.5 text-[#6cf8bb]" />
+                            </button>
+                          </div>
+                        )}
+
+                        {!otpSent && (
+                          <div className="p-3 bg-[#eff4ff] rounded-xl text-xs text-[#44474e] flex items-center gap-2">
+                            <span className="material-symbols-outlined text-[18px] text-[#006c49]">sms</span>
+                            <span>Click <strong>"Get OTP"</strong> to receive an instant verification SMS code on your Indian mobile number.</span>
+                          </div>
+                        )}
+                      </form>
+                    )}
+
+                    {/* METHOD 2: LOGIN WITH PASSWORD */}
+                    {loginMethod === 'password' && (
+                      <form onSubmit={handlePasswordLoginSubmit} className="space-y-3">
+                        <div>
+                          <label className="block text-[11px] font-semibold text-[#0b1c30] mb-1">
+                            Email Address or Mobile Number:
+                          </label>
+                          <div className="relative">
+                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[#74777f]">
+                              <Mail className="w-3.5 h-3.5" />
+                            </span>
+                            <input
+                              type="text"
+                              required
+                              value={loginIdentifier}
+                              onChange={(e) => setLoginIdentifier(e.target.value)}
+                              placeholder="e.g. rahul.sharma@gmail.com or 9823456789"
+                              className="w-full pl-9 pr-3 py-2 bg-[#f8f9ff] border border-[#c4c6cf] rounded-xl text-xs text-[#0b1c30] focus:ring-2 focus:ring-[#006c49] focus:bg-white focus:outline-none transition-all"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="block text-[11px] font-semibold text-[#0b1c30]">
+                              Password:
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => setShowForgotPasswordModal(true)}
+                              className="text-[10px] text-[#006c49] hover:underline font-semibold"
+                            >
+                              Forgot password?
+                            </button>
+                          </div>
+                          <div className="relative">
+                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[#74777f]">
+                              <Lock className="w-3.5 h-3.5" />
+                            </span>
+                            <input
+                              type={showPassword ? 'text' : 'password'}
+                              required
+                              value={loginPassword}
+                              onChange={(e) => setLoginPassword(e.target.value)}
+                              placeholder="••••••••••••"
+                              className="w-full pl-9 pr-10 py-2 bg-[#f8f9ff] border border-[#c4c6cf] rounded-xl text-xs text-[#0b1c30] focus:ring-2 focus:ring-[#006c49] focus:bg-white focus:outline-none transition-all font-mono"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowPassword(!showPassword)}
+                              className="absolute inset-y-0 right-0 flex items-center pr-3 text-[#74777f] hover:text-[#001026]"
+                            >
+                              {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-0.5">
+                          <label className="flex items-center gap-2 cursor-pointer text-xs text-[#44474e]">
+                            <input
+                              type="checkbox"
+                              checked={rememberMe}
+                              onChange={(e) => setRememberMe(e.target.checked)}
+                              className="w-3.5 h-3.5 rounded text-[#006c49] focus:ring-[#006c49] border-[#c4c6cf]"
+                            />
+                            <span className="text-[11px]">Remember device for 30 days</span>
+                          </label>
+                          <span className="text-[10px] text-[#74777f] font-mono">CDSCO / 256-Bit</span>
+                        </div>
+
+                        <button
+                          type="submit"
+                          className="w-full py-2.5 px-4 bg-[#001026] hover:bg-[#0b2545] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-all"
+                        >
+                          <span>Sign In to {rolesList.find(r => r.id === selectedRole)?.defaultTitle}</span>
+                          <ArrowRight className="w-3.5 h-3.5 text-[#6cf8bb]" />
+                        </button>
+                      </form>
+                    )}
+                  </div>
+                )}
+
+                {/* AUTH MODE: REGISTER (Indian Format) */}
+                {authMode === 'register' && (
+                  <form onSubmit={handleRegisterSubmit} className="space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <div>
+                        <label className="block text-[11px] font-semibold text-[#0b1c30] mb-1">
+                          Full Name:
+                        </label>
                         <input
                           type="text"
                           required
-                          value={loginIdentifier}
-                          onChange={(e) => setLoginIdentifier(e.target.value)}
-                          placeholder="e.g. johnathan.doe@gmail.com"
-                          className="w-full pl-9 pr-3 py-2 bg-[#f8f9ff] border border-[#c4c6cf] rounded-xl text-xs text-[#0b1c30] focus:ring-2 focus:ring-[#006c49] focus:bg-white focus:outline-none transition-all"
+                          value={regName}
+                          onChange={(e) => setRegName(e.target.value)}
+                          placeholder="e.g. Rahul Sharma"
+                          className="w-full px-3 py-1.5 bg-[#f8f9ff] border border-[#c4c6cf] rounded-xl text-xs text-[#0b1c30] focus:ring-2 focus:ring-[#006c49] focus:bg-white focus:outline-none"
                         />
                       </div>
-                    </div>
 
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="block text-[11px] font-semibold text-[#0b1c30]">
-                          Password:
+                      <div>
+                        <label className="block text-[11px] font-semibold text-[#0b1c30] mb-1">
+                          Mobile (+91):
                         </label>
-                        <button
-                          type="button"
-                          onClick={() => setShowForgotPasswordModal(true)}
-                          className="text-[10px] text-[#006c49] hover:underline font-semibold"
-                        >
-                          Forgot password?
-                        </button>
-                      </div>
-                      <div className="relative">
-                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[#74777f]">
-                          <Lock className="w-3.5 h-3.5" />
-                        </span>
                         <input
-                          type={showPassword ? 'text' : 'password'}
+                          type="tel"
+                          maxLength={10}
                           required
-                          value={loginPassword}
-                          onChange={(e) => setLoginPassword(e.target.value)}
-                          placeholder="••••••••••••"
-                          className="w-full pl-9 pr-10 py-2 bg-[#f8f9ff] border border-[#c4c6cf] rounded-xl text-xs text-[#0b1c30] focus:ring-2 focus:ring-[#006c49] focus:bg-white focus:outline-none transition-all font-mono"
+                          value={regPhone}
+                          onChange={(e) => setRegPhone(e.target.value.replace(/\D/g, ''))}
+                          placeholder="10-digit mobile"
+                          className="w-full px-3 py-1.5 bg-[#f8f9ff] border border-[#c4c6cf] rounded-xl text-xs font-mono text-[#0b1c30] focus:ring-2 focus:ring-[#006c49] focus:bg-white focus:outline-none"
                         />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute inset-y-0 right-0 flex items-center pr-3 text-[#74777f] hover:text-[#001026]"
-                        >
-                          {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-0.5">
-                      <label className="flex items-center gap-2 cursor-pointer text-xs text-[#44474e]">
-                        <input
-                          type="checkbox"
-                          checked={rememberMe}
-                          onChange={(e) => setRememberMe(e.target.checked)}
-                          className="w-3.5 h-3.5 rounded text-[#006c49] focus:ring-[#006c49] border-[#c4c6cf]"
-                        />
-                        <span className="text-[11px]">Remember device for 30 days</span>
-                      </label>
-                      <span className="text-[10px] text-[#74777f] font-mono">256-Bit SSL</span>
-                    </div>
-
-                    <button
-                      type="submit"
-                      className="w-full py-2.5 px-4 bg-[#001026] hover:bg-[#0b2545] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.99]"
-                    >
-                      <span>Sign In to {rolesList.find(r => r.id === selectedRole)?.title}</span>
-                      <ArrowRight className="w-3.5 h-3.5 text-[#6cf8bb]" />
-                    </button>
-
-                    {/* Social SSO Buttons */}
-                    <div className="pt-1">
-                      <div className="relative flex items-center justify-center my-2">
-                        <div className="border-t border-[#c4c6cf]/60 w-full"></div>
-                        <span className="bg-white px-2 text-[9px] uppercase font-bold text-[#74777f] absolute">
-                          Or Continue With
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const demoPatient = DEMO_USERS[0];
-                            onLogin(demoPatient);
-                            onShowToast(`Signed in with Google Health ID as ${demoPatient.name}!`);
-                            onNavigateScreen('customer-app');
-                          }}
-                          className="py-1.5 px-2.5 border border-[#c4c6cf] hover:bg-[#eff4ff] rounded-xl text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors"
-                        >
-                          <span className="font-bold text-[#ba1a1a]">G</span>
-                          <span className="truncate">Google Health ID</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const demoPharmacist = DEMO_USERS[1];
-                            onLogin(demoPharmacist);
-                            onShowToast(`Signed in with Provider SSO as ${demoPharmacist.name}!`);
-                            onNavigateScreen('pharmacy-portal');
-                          }}
-                          className="py-1.5 px-2.5 border border-[#c4c6cf] hover:bg-[#eff4ff] rounded-xl text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors"
-                        >
-                          <Stethoscope className="w-3 h-3 text-[#006c49]" />
-                          <span className="truncate">Provider NPI SSO</span>
-                        </button>
-                      </div>
-                    </div>
-                  </form>
-                )}
-
-                {/* FORM VIEW: REGISTER */}
-                {authMode === 'register' && (
-                  <form onSubmit={handleRegisterSubmit} className="space-y-3.5">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs font-semibold text-[#0b1c30] mb-1">
-                          Full Legal Name: <span className="text-red-500">*</span>
-                        </label>
-                        <div className="relative">
-                          <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[#74777f]">
-                            <User className="w-4 h-4" />
-                          </span>
-                          <input
-                            type="text"
-                            required
-                            value={regName}
-                            onChange={(e) => setRegName(e.target.value)}
-                            placeholder="e.g. Sarah Jenkins"
-                            className="w-full pl-9 pr-3 py-2 bg-[#f8f9ff] border border-[#c4c6cf] rounded-xl text-xs text-[#0b1c30] focus:ring-2 focus:ring-[#006c49] focus:bg-white focus:outline-none"
-                          />
-                        </div>
                       </div>
 
                       <div>
-                        <label className="block text-xs font-semibold text-[#0b1c30] mb-1">
-                          Mobile Number: <span className="text-red-500">*</span>
+                        <label className="block text-[11px] font-semibold text-[#0b1c30] mb-1">
+                          Email Address:
                         </label>
-                        <div className="relative">
-                          <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[#74777f]">
-                            <Phone className="w-4 h-4" />
-                          </span>
-                          <input
-                            type="tel"
-                            required
-                            value={regPhone}
-                            onChange={(e) => setRegPhone(e.target.value)}
-                            placeholder="e.g. +1 (718) 555-0199"
-                            className="w-full pl-9 pr-3 py-2 bg-[#f8f9ff] border border-[#c4c6cf] rounded-xl text-xs text-[#0b1c30] focus:ring-2 focus:ring-[#006c49] focus:bg-white focus:outline-none"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-semibold text-[#0b1c30] mb-1">
-                        Email Address: <span className="text-red-500">*</span>
-                      </label>
-                      <div className="relative">
-                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[#74777f]">
-                          <Mail className="w-4 h-4" />
-                        </span>
                         <input
                           type="email"
-                          required
                           value={regEmail}
                           onChange={(e) => setRegEmail(e.target.value)}
-                          placeholder="e.g. sarah.jenkins@example.com"
-                          className="w-full pl-9 pr-3 py-2 bg-[#f8f9ff] border border-[#c4c6cf] rounded-xl text-xs text-[#0b1c30] focus:ring-2 focus:ring-[#006c49] focus:bg-white focus:outline-none"
+                          placeholder="rahul@example.com"
+                          className="w-full px-3 py-1.5 bg-[#f8f9ff] border border-[#c4c6cf] rounded-xl text-xs text-[#0b1c30] focus:ring-2 focus:ring-[#006c49] focus:bg-white focus:outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-semibold text-[#0b1c30] mb-1">
+                          PIN Code (6 Digits):
+                        </label>
+                        <input
+                          type="text"
+                          maxLength={6}
+                          required
+                          value={regPincode}
+                          onChange={(e) => setRegPincode(e.target.value.replace(/\D/g, ''))}
+                          placeholder="411016"
+                          className="w-full px-3 py-1.5 bg-[#f8f9ff] border border-[#c4c6cf] rounded-xl text-xs font-mono text-[#0b1c30] focus:ring-2 focus:ring-[#006c49] focus:bg-white focus:outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-semibold text-[#0b1c30] mb-1">
+                          City / District:
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={regCity}
+                          onChange={(e) => setRegCity(e.target.value)}
+                          placeholder="Pune"
+                          className="w-full px-3 py-1.5 bg-[#f8f9ff] border border-[#c4c6cf] rounded-xl text-xs text-[#0b1c30] focus:ring-2 focus:ring-[#006c49] focus:bg-white focus:outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-semibold text-[#0b1c30] mb-1">
+                          State:
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={regState}
+                          onChange={(e) => setRegState(e.target.value)}
+                          placeholder="Maharashtra"
+                          className="w-full px-3 py-1.5 bg-[#f8f9ff] border border-[#c4c6cf] rounded-xl text-xs text-[#0b1c30] focus:ring-2 focus:ring-[#006c49] focus:bg-white focus:outline-none"
                         />
                       </div>
                     </div>
 
-                    {/* Role-specific conditional fields */}
+                    {/* Role-specific registration fields */}
                     {selectedRole === 'pharmacist' && (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-[#eff4ff] rounded-xl border border-[#c4c6cf]/60">
-                        <div>
-                          <label className="block text-[11px] font-bold text-[#001026] mb-1">
-                            RPh License # / State Board:
-                          </label>
+                      <div className="p-2.5 bg-[#eff4ff] rounded-xl border border-[#c4c6cf]/40 space-y-2">
+                        <div className="text-[10px] font-bold uppercase text-[#006c49]">Pharmacist Credentials (Form 20/21)</div>
+                        <div className="grid grid-cols-2 gap-2">
                           <input
                             type="text"
                             required
                             value={regLicense}
                             onChange={(e) => setRegLicense(e.target.value)}
-                            placeholder="e.g. PH-88201-NY"
-                            className="w-full px-3 py-1.5 bg-white border border-[#c4c6cf] rounded-lg text-xs"
+                            placeholder="State Pharmacy Council Reg No."
+                            className="px-2.5 py-1.5 bg-white border border-[#c4c6cf] rounded-lg text-xs"
                           />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] font-bold text-[#001026] mb-1">
-                            Dispensary / Store Hub Name:
-                          </label>
                           <input
                             type="text"
-                            required
                             value={regFacility}
                             onChange={(e) => setRegFacility(e.target.value)}
-                            placeholder="e.g. MetroCare Hub #104"
-                            className="w-full px-3 py-1.5 bg-white border border-[#c4c6cf] rounded-lg text-xs"
+                            placeholder="Jan Aushadhi Kendra Name"
+                            className="px-2.5 py-1.5 bg-white border border-[#c4c6cf] rounded-lg text-xs"
                           />
                         </div>
                       </div>
                     )}
 
-                    {selectedRole === 'manufacturer' && (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-[#eff4ff] rounded-xl border border-[#c4c6cf]/60">
-                        <div>
-                          <label className="block text-[11px] font-bold text-[#001026] mb-1">
-                            FDA Establishment ID (FEI):
-                          </label>
-                          <input
-                            type="text"
-                            required
-                            value={regLicense}
-                            onChange={(e) => setRegLicense(e.target.value)}
-                            placeholder="e.g. FEI-30048291"
-                            className="w-full px-3 py-1.5 bg-white border border-[#c4c6cf] rounded-lg text-xs"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] font-bold text-[#001026] mb-1">
-                            Pharmaceutical Manufacturer:
-                          </label>
-                          <input
-                            type="text"
-                            required
-                            value={regFacility}
-                            onChange={(e) => setRegFacility(e.target.value)}
-                            placeholder="e.g. Sandoz BioPharma Plant 2"
-                            className="w-full px-3 py-1.5 bg-white border border-[#c4c6cf] rounded-lg text-xs"
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    {selectedRole === 'patient' && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       <div>
-                        <label className="block text-xs font-semibold text-[#0b1c30] mb-1">
-                          Delivery Street Address (Brooklyn Express Zone):
-                        </label>
-                        <div className="relative">
-                          <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[#74777f]">
-                            <MapPin className="w-4 h-4" />
-                          </span>
-                          <input
-                            type="text"
-                            value={regAddress}
-                            onChange={(e) => setRegAddress(e.target.value)}
-                            placeholder="e.g. 742 Evergreen Terr, Brooklyn NY 11201"
-                            className="w-full pl-9 pr-3 py-2 bg-[#f8f9ff] border border-[#c4c6cf] rounded-xl text-xs text-[#0b1c30] focus:ring-2 focus:ring-[#006c49] focus:bg-white focus:outline-none"
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Passwords */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs font-semibold text-[#0b1c30] mb-1">
-                          Create Password:
+                        <label className="block text-[11px] font-semibold text-[#0b1c30] mb-1">
+                          Password:
                         </label>
                         <input
                           type="password"
                           required
                           value={regPassword}
                           onChange={(e) => setRegPassword(e.target.value)}
-                          placeholder="Min 8 characters"
-                          className="w-full px-3 py-2 bg-[#f8f9ff] border border-[#c4c6cf] rounded-xl text-xs text-[#0b1c30] focus:ring-2 focus:ring-[#006c49] focus:bg-white focus:outline-none font-mono"
+                          placeholder="••••••••••••"
+                          className="w-full px-3 py-1.5 bg-[#f8f9ff] border border-[#c4c6cf] rounded-xl text-xs text-[#0b1c30] focus:ring-2 focus:ring-[#006c49] focus:bg-white focus:outline-none"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-xs font-semibold text-[#0b1c30] mb-1">
+                        <label className="block text-[11px] font-semibold text-[#0b1c30] mb-1">
                           Confirm Password:
                         </label>
                         <input
@@ -808,85 +959,30 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                           required
                           value={regConfirmPassword}
                           onChange={(e) => setRegConfirmPassword(e.target.value)}
-                          placeholder="Re-enter password"
-                          className="w-full px-3 py-2 bg-[#f8f9ff] border border-[#c4c6cf] rounded-xl text-xs text-[#0b1c30] focus:ring-2 focus:ring-[#006c49] focus:bg-white focus:outline-none font-mono"
+                          placeholder="••••••••••••"
+                          className="w-full px-3 py-1.5 bg-[#f8f9ff] border border-[#c4c6cf] rounded-xl text-xs text-[#0b1c30] focus:ring-2 focus:ring-[#006c49] focus:bg-white focus:outline-none"
                         />
                       </div>
                     </div>
 
-                    {/* Password strength indicator */}
-                    {regPassword && (
-                      <div className="flex items-center gap-2 text-[11px] text-[#44474e]">
-                        <span>Strength:</span>
-                        <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden flex gap-1">
-                          <div className={`h-full flex-1 ${pwdStrength.score >= 1 ? pwdStrength.color : 'bg-slate-200'}`}></div>
-                          <div className={`h-full flex-1 ${pwdStrength.score >= 2 ? pwdStrength.color : 'bg-slate-200'}`}></div>
-                          <div className={`h-full flex-1 ${pwdStrength.score >= 3 ? pwdStrength.color : 'bg-slate-200'}`}></div>
-                        </div>
-                        <span className="font-bold">{pwdStrength.label}</span>
-                      </div>
-                    )}
-
-                    {/* Checkboxes */}
-                    <div className="space-y-1.5 pt-1 text-xs text-[#44474e]">
-                      <label className="flex items-start gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={agreeTerms}
-                          onChange={(e) => setAgreeTerms(e.target.checked)}
-                          className="w-4 h-4 rounded text-[#006c49] focus:ring-[#006c49] border-[#c4c6cf] mt-0.5"
-                        />
-                        <span>
-                          I agree to GenericMed <strong className="text-[#001026]">Terms of Service</strong> and consent to <strong className="text-[#001026]">HIPAA Electronic Data Privacy</strong> regulations.
-                        </span>
-                      </label>
-
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={enable2FA}
-                          onChange={(e) => setEnable2FA(e.target.checked)}
-                          className="w-4 h-4 rounded text-[#006c49] focus:ring-[#006c49] border-[#c4c6cf]"
-                        />
-                        <span>Enable SMS 2-factor authentication &amp; 35-min delivery PIN notifications</span>
-                      </label>
-                    </div>
+                    <label className="flex items-center gap-2 cursor-pointer text-xs text-[#44474e] pt-1">
+                      <input
+                        type="checkbox"
+                        checked={agreeTerms}
+                        onChange={(e) => setAgreeTerms(e.target.checked)}
+                        className="w-3.5 h-3.5 rounded text-[#006c49] focus:ring-[#006c49] border-[#c4c6cf]"
+                      />
+                      <span className="text-[11px]">I agree to Jan Aushadhi, CDSCO, and ABDM terms of service</span>
+                    </label>
 
                     <button
                       type="submit"
-                      className="w-full py-2.5 px-4 bg-[#006c49] hover:bg-[#006c49]/90 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.99] mt-1.5"
+                      className="w-full py-2.5 px-4 bg-[#001026] hover:bg-[#0b2545] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-all"
                     >
-                      <span>Create My {rolesList.find(r => r.id === selectedRole)?.title} Account</span>
+                      <span>Create {rolesList.find(r => r.id === selectedRole)?.defaultTitle} Account</span>
                       <ArrowRight className="w-3.5 h-3.5 text-[#6cf8bb]" />
                     </button>
                   </form>
-                )}
-              </div>
-
-              {/* Bottom Footer Note */}
-              <div className="pt-3 mt-3 border-t border-[#c4c6cf]/50 text-center text-xs text-[#74777f]">
-                {authMode === 'login' ? (
-                  <p>
-                    Don&apos;t have an account yet?{' '}
-                    <button
-                      type="button"
-                      onClick={() => setAuthMode('register')}
-                      className="text-[#006c49] font-bold hover:underline"
-                    >
-                      Register in under 2 minutes
-                    </button>
-                  </p>
-                ) : (
-                  <p>
-                    Already have an account?{' '}
-                    <button
-                      type="button"
-                      onClick={() => setAuthMode('login')}
-                      className="text-[#006c49] font-bold hover:underline"
-                    >
-                      Sign In here
-                    </button>
-                  </p>
                 )}
               </div>
             </div>
@@ -896,52 +992,39 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
 
       {/* Forgot Password Modal */}
       {showForgotPasswordModal && (
-        <div className="fixed inset-0 z-50 bg-[#001026]/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full shadow-2xl border border-[#c4c6cf] p-6 space-y-4">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl border border-[#c4c6cf]">
             <div className="flex items-center justify-between border-b pb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-[#006c49]/20 text-[#006c49] flex items-center justify-center">
-                  <KeyRound className="w-4 h-4" />
-                </div>
-                <h3 className="font-display font-bold text-base text-[#001026]">Reset Your Password</h3>
-              </div>
-              <button onClick={() => setShowForgotPasswordModal(false)} className="text-[#74777f]">
-                <span className="material-symbols-outlined">close</span>
+              <h3 className="font-display font-bold text-sm text-[#001026]">Password Recovery via Mobile / Email</h3>
+              <button onClick={() => setShowForgotPasswordModal(false)} className="text-slate-400 hover:text-black">
+                <span className="material-symbols-outlined text-[18px]">close</span>
               </button>
             </div>
-
-            <p className="text-xs text-[#44474e] leading-relaxed">
-              Enter the email address or phone number registered with your GenericMed account. We will send a secure one-time verification token.
+            <p className="text-xs text-[#44474e]">
+              Enter your registered Indian mobile number or email to receive a password reset verification code.
             </p>
-
             <form onSubmit={handleForgotPassword} className="space-y-3">
-              <div>
-                <label className="block text-xs font-semibold text-[#001026] mb-1">
-                  Registered Email Address:
-                </label>
-                <input
-                  type="email"
-                  required
-                  value={resetEmail}
-                  onChange={(e) => setResetEmail(e.target.value)}
-                  placeholder="e.g. johnathan.doe@gmail.com"
-                  className="w-full p-2.5 bg-[#f8f9ff] border border-[#c4c6cf] rounded-xl text-xs text-[#001026] focus:ring-2 focus:ring-[#006c49] focus:outline-none"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2 border-t">
+              <input
+                type="text"
+                required
+                value={resetEmail}
+                onChange={(e) => setResetEmail(e.target.value)}
+                placeholder="e.g. 9823456789 or rahul.sharma@gmail.com"
+                className="w-full px-3 py-2 bg-[#f8f9ff] border border-[#c4c6cf] rounded-xl text-xs"
+              />
+              <div className="flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setShowForgotPasswordModal(false)}
-                  className="px-4 py-2 border rounded-xl text-xs font-semibold text-[#44474e]"
+                  className="px-3 py-1.5 rounded-xl border text-xs font-semibold"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-[#001026] text-white rounded-xl text-xs font-bold hover:bg-[#0b2545] transition-colors"
+                  className="px-4 py-1.5 rounded-xl bg-[#006c49] text-white text-xs font-bold"
                 >
-                  Send Reset Token
+                  Send Reset OTP
                 </button>
               </div>
             </form>
@@ -951,29 +1034,11 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
     </div>
   );
 
-  // If user selected mobile device frame mode, wrap in realistic iPhone viewport
-  if (isMobileFrame) {
-    return (
-      <div className="py-8 px-4 flex justify-center items-center min-h-[calc(100vh-60px)] bg-slate-900">
-        <div className="w-[390px] h-[844px] bg-white rounded-[44px] shadow-2xl border-[10px] border-slate-800 overflow-hidden relative flex flex-col">
-          {/* Phone Speaker & Notch bar */}
-          <div className="w-full bg-[#001026] pt-3 pb-1 px-6 flex justify-between items-center text-white text-[11px] font-mono z-50">
-            <span>9:41</span>
-            <div className="w-20 h-4 bg-black rounded-full"></div>
-            <div className="flex items-center gap-1">
-              <span className="material-symbols-outlined text-[14px]">signal_cellular_alt</span>
-              <span className="material-symbols-outlined text-[14px]">wifi</span>
-              <span className="material-symbols-outlined text-[14px]">battery_full</span>
-            </div>
-          </div>
-          <div className="flex-1 overflow-y-auto custom-scrollbar relative bg-[#f8f9ff]">
-            {mainAuthContent}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Full-width Responsive Website View
-  return mainAuthContent;
+  return isMobileFrame ? (
+    <div className="max-w-[420px] mx-auto rounded-[40px] shadow-2xl border-[8px] border-[#1e293b] overflow-hidden my-4 bg-white">
+      {mainAuthContent}
+    </div>
+  ) : (
+    mainAuthContent
+  );
 };

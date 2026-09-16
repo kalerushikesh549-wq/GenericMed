@@ -10,9 +10,12 @@ import { ManufacturerPortalScreen } from './components/screens/ManufacturerPorta
 import { SystemArchitectureScreen } from './components/screens/SystemArchitectureScreen';
 import { AuthScreen } from './components/screens/AuthScreen';
 import { MEDICINES, DEMO_USERS } from './data/mockData';
+import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
+import { formatINR } from './utils/formatters';
 
-export function App() {
-  const [currentScreen, setCurrentScreen] = useState<ScreenId>('enterprise-ops');
+function AppContent() {
+  const { t } = useLanguage();
+  const [currentScreen, setCurrentScreen] = useState<ScreenId>('customer-app');
   const [isMobileFrame, setIsMobileFrame] = useState(false);
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(DEMO_USERS[0]);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -61,10 +64,6 @@ export function App() {
 
   const handleSelectScreen = (screen: ScreenId) => {
     setCurrentScreen(screen);
-    // If switching to mobile screens, default to phone frame on desktop screens
-    if ((screen === 'customer-app' || screen === 'rx-scanner' || screen === 'order-tracking') && window.innerWidth > 1024) {
-      // keep user frame preference
-    }
   };
 
   const filteredMedicines = MEDICINES.filter(m => 
@@ -181,7 +180,7 @@ export function App() {
                 autoFocus
                 value={globalSearchInput}
                 onChange={(e) => setGlobalSearchInput(e.target.value)}
-                placeholder="Search medicines, NDC, prescriptions, or screens..."
+                placeholder="Search Indian medicines, Dolo, Augmentin, PMBJP salt, or screens..."
                 className="flex-1 bg-transparent border-none text-xs sm:text-sm text-[#0b1c30] focus:ring-0 focus:outline-none"
               />
               <kbd className="text-[10px] bg-slate-200 px-1.5 py-0.5 rounded text-slate-700">ESC</kbd>
@@ -191,14 +190,14 @@ export function App() {
               <div className="text-[10px] font-bold uppercase text-[#74777f] px-2">Navigate Screens:</div>
               <div className="grid grid-cols-2 gap-1.5">
                 {[
-                  { id: 'enterprise-ops' as ScreenId, name: '🏢 Enterprise Gateway' },
                   { id: 'customer-app' as ScreenId, name: '📱 Customer Search & Compare' },
                   { id: 'rx-scanner' as ScreenId, name: '📷 Prescription OCR Scanner' },
                   { id: 'order-tracking' as ScreenId, name: '🚚 Live Order Tracking' },
-                  { id: 'pharmacy-portal' as ScreenId, name: '🏥 Pharmacy Workbench' },
+                  { id: 'pharmacy-portal' as ScreenId, name: '🏥 Jan Aushadhi Workbench' },
                   { id: 'manufacturer-portal' as ScreenId, name: '🏭 Manufacturer Portal' },
+                  { id: 'enterprise-ops' as ScreenId, name: '🏢 CDSCO Enterprise Gateway' },
                   { id: 'system-architecture' as ScreenId, name: '🗺️ System Architecture' },
-                  { id: 'auth' as ScreenId, name: '🔐 Login & Register / Account' }
+                  { id: 'auth' as ScreenId, name: '🔐 Login with OTP & Password' }
                 ].map(item => (
                   <button
                     key={item.id}
@@ -222,7 +221,7 @@ export function App() {
                     onClick={() => {
                       setCurrentScreen('customer-app');
                       setShowGlobalSearch(false);
-                      showToast(`Viewing generic substitution for ${med.brandName}`);
+                      showToast(`Viewing Jan Aushadhi substitution for ${med.brandName}`);
                     }}
                     className="p-2 rounded-lg hover:bg-[#eff4ff] cursor-pointer flex items-center justify-between"
                   >
@@ -234,7 +233,7 @@ export function App() {
                       <span className="text-[10px] font-bold text-[#006c49] bg-[#006c49]/10 px-2 py-0.5 rounded">
                         Save {med.savingsPercentage}%
                       </span>
-                      <div className="text-xs font-bold text-[#001026] mt-0.5">${med.genericPrice.toFixed(2)}</div>
+                      <div className="text-xs font-bold text-[#001026] mt-0.5">{formatINR(med.genericPrice)}</div>
                     </div>
                   </div>
                 ))}
@@ -244,6 +243,14 @@ export function App() {
         </div>
       )}
     </div>
+  );
+}
+
+export function App() {
+  return (
+    <LanguageProvider>
+      <AppContent />
+    </LanguageProvider>
   );
 }
 

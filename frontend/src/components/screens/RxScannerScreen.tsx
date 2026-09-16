@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ASSET_IMAGES, CURRENT_ORDER } from '../../data/mockData';
 import { ScreenId } from '../../types';
+import { formatINR } from '../../utils/formatters';
+import { useLanguage } from '../../i18n/LanguageContext';
 
 interface RxScannerScreenProps {
   onNavigateScreen: (screen: ScreenId) => void;
@@ -13,8 +15,8 @@ export const RxScannerScreen: React.FC<RxScannerScreenProps> = ({
   onShowToast,
   isMobileFrame = false
 }) => {
+  const { t } = useLanguage();
   const [flashOn, setFlashOn] = useState(false);
-  const [scanMode, setScanMode] = useState<'auto' | 'manual' | 'pdf'>('auto');
   const [sourceType, setSourceType] = useState<'camera' | 'fixture' | 'upload'>('fixture');
   const [isScanning, setIsScanning] = useState(true);
   const [selectedPage, setSelectedPage] = useState(1);
@@ -45,7 +47,7 @@ export const RxScannerScreen: React.FC<RxScannerScreenProps> = ({
       }
       setCameraActive(true);
       setSourceType('camera');
-      onShowToast('WebRTC Camera initialized! Position prescription inside optical guide.');
+      onShowToast('WebRTC Camera initialized! Position Indian prescription pad inside optical guide.');
     } catch (err) {
       console.warn('Camera access denied or failed:', err);
       setCameraActive(false);
@@ -83,7 +85,7 @@ export const RxScannerScreen: React.FC<RxScannerScreenProps> = ({
       }
     }
     setIsScanning(false);
-    onShowToast('Prescription Captured! OCR confidence: 99.4%. Generic match found: Atorvastatin Calcium 20mg.');
+    onShowToast(`Prescription Captured! OCR confidence: 99.4%. Jan Aushadhi generic match: ${CURRENT_ORDER.genericSubstitute}`);
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -111,8 +113,10 @@ export const RxScannerScreen: React.FC<RxScannerScreenProps> = ({
         </button>
 
         <div className="text-center">
-          <h2 className="font-display font-bold text-sm text-white">Scan Prescription</h2>
-          <p className="text-[10px] text-[#6cf8bb]">AI Salt &amp; Molecule Extraction Engine</p>
+          <h2 className="font-display font-bold text-sm text-white">
+            {t('rxScanner', 'Prescription OCR Scanner')}
+          </h2>
+          <p className="text-[10px] text-[#6cf8bb]">CDSCO &amp; Jan Aushadhi Molecule Engine</p>
         </div>
 
         <button
@@ -158,7 +162,7 @@ export const RxScannerScreen: React.FC<RxScannerScreenProps> = ({
             stopCamera();
             setSourceType('fixture');
             setCapturedSnapshot(null);
-            onShowToast('Switched to high-res clinical demo fixture');
+            onShowToast('Switched to Apollo Clinic Pune demo prescription');
           }}
           className={`px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1 transition-all ${
             sourceType === 'fixture'
@@ -167,7 +171,7 @@ export const RxScannerScreen: React.FC<RxScannerScreenProps> = ({
           }`}
         >
           <span className="material-symbols-outlined text-[14px]">image</span>
-          Demo Pad
+          Indian Rx Pad
         </button>
         <button
           onClick={() => fileInputRef.current?.click()}
@@ -187,15 +191,14 @@ export const RxScannerScreen: React.FC<RxScannerScreenProps> = ({
         <div className="bg-[#001026]/90 border border-[#6cf8bb]/40 rounded-full px-3 py-1 flex items-center gap-2 text-[11px] shadow-lg">
           <span className="w-2 h-2 rounded-full bg-[#6cf8bb] animate-ping"></span>
           <span className="font-medium text-slate-200">
-            {sourceType === 'camera' ? 'WebRTC Stream Active' : sourceType === 'upload' ? 'Custom Doc Loaded' : 'Optical Target Ready'}
+            {sourceType === 'camera' ? 'WebRTC Active' : sourceType === 'upload' ? 'Prescription Loaded' : 'Apollo Clinic Target Ready'}
           </span>
-          <span className="text-[#6ffbbe] font-bold">• 99.1% Confidence</span>
+          <span className="text-[#6ffbbe] font-bold">• 99.4% Confidence</span>
         </div>
       </div>
 
       {/* Camera Viewfinder Area */}
       <div className="flex-1 relative flex items-center justify-center p-4 overflow-hidden">
-        {/* Prescription Doc under viewfinder */}
         <div className="relative w-full max-w-sm aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl border border-white/20 bg-slate-900">
           {sourceType === 'camera' ? (
             <video
@@ -208,26 +211,22 @@ export const RxScannerScreen: React.FC<RxScannerScreenProps> = ({
           ) : capturedSnapshot ? (
             <img
               src={capturedSnapshot}
-              alt="Uploaded Prescription Target"
+              alt="Uploaded Indian Prescription Target"
               className="w-full h-full object-cover"
             />
           ) : (
             <img
               src={ASSET_IMAGES.prescriptionPad}
-              alt="Doctor Prescription Target"
+              alt="Indian Doctor Prescription Target"
               className="w-full h-full object-cover opacity-85"
             />
           )}
 
-          {/* Flashlight overlay if active */}
           {flashOn && (
             <div className="absolute inset-0 bg-yellow-100/15 pointer-events-none mix-blend-screen"></div>
           )}
 
-          {/* Dark vignette borders outside scan zone */}
           <div className="absolute inset-0 border-[16px] border-black/40 pointer-events-none"></div>
-
-          {/* Glowing Animated Laser Scanline */}
           <div className="absolute inset-x-4 h-0.5 bg-[#6cf8bb] shadow-[0_0_12px_#6cf8bb] animate-scan pointer-events-none"></div>
 
           {/* Corner Brackets */}
@@ -236,29 +235,26 @@ export const RxScannerScreen: React.FC<RxScannerScreenProps> = ({
           <div className="absolute bottom-4 left-4 w-7 h-7 border-b-3 border-l-3 border-[#6cf8bb] rounded-bl-lg pointer-events-none"></div>
           <div className="absolute bottom-4 right-4 w-7 h-7 border-b-3 border-r-3 border-[#6cf8bb] rounded-br-lg pointer-events-none"></div>
 
-          {/* OCR Real-Time Bounding Detection Boxes */}
-          {/* Target 1: Drug Name */}
+          {/* OCR Real-Time Bounding Detection Boxes (Indian Rx) */}
           <div className="absolute top-[38%] left-[10%] right-[10%] p-2 rounded-lg border-2 border-[#6cf8bb] bg-[#006c49]/20 backdrop-blur-xs shadow-lg animate-pulse">
             <div className="flex items-center justify-between text-[11px] font-bold text-[#6cf8bb]">
               <span className="flex items-center gap-1">
                 <span className="material-symbols-outlined text-[14px]">auto_awesome</span>
-                Lipitor 20mg
+                {CURRENT_ORDER.brandPrescribed}
               </span>
               <span className="bg-[#6cf8bb] text-[#002113] text-[9px] px-1.5 py-0.2 rounded font-extrabold">
-                85.6% Generic Match
+                83.8% Jan Aushadhi Match
               </span>
             </div>
           </div>
 
-          {/* Target 2: Dosage Extract */}
           <div className="absolute top-[52%] left-[10%] right-[15%] p-1.5 rounded-lg border border-dashed border-[#6cf8bb]/80 bg-black/40 text-[10px] text-white">
-            <span className="text-[#6ffbbe] font-semibold">Dosage Extracted:</span> 1 PO qHS (Bedtime)
+            <span className="text-[#6ffbbe] font-semibold">Dosage Schedule:</span> 1 Tab Bedtime (qHS) + SOS
           </div>
 
-          {/* Target 3: Prescriber Signature */}
           <div className="absolute bottom-[16%] right-[10%] px-2 py-1 rounded border border-[#6cf8bb]/60 bg-black/40 text-[9px] text-[#6cf8bb] flex items-center gap-1">
             <span className="material-symbols-outlined text-[12px]">verified</span>
-            Valid Prescriber Signature
+            MMC Reg #2009/04/1822 Validated
           </div>
         </div>
       </div>
@@ -270,26 +266,26 @@ export const RxScannerScreen: React.FC<RxScannerScreenProps> = ({
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-[#006c49]"></span>
               <span className="font-display font-bold text-xs text-white">
-                1 Prescription Detected
+                1 Indian Prescription Entity Detected
               </span>
             </div>
             <span className="text-[10px] font-mono bg-[#0b2545] text-[#6cf8bb] px-2 py-0.5 rounded border border-[#6cf8bb]/20">
-              HIPAA 256-BIT ENCRYPTED
+              CDSCO / IT ACT ENCRYPTED
             </span>
           </div>
 
           <div className="flex items-center justify-between bg-white/5 rounded-xl p-2.5 border border-white/10">
             <div>
-              <div className="text-[11px] text-slate-400 line-through">Prescribed: {CURRENT_ORDER.brandPrescribed} ($98.50)</div>
+              <div className="text-[11px] text-slate-400 line-through">Prescribed: {CURRENT_ORDER.brandPrescribed} ({formatINR(CURRENT_ORDER.priceBrand)})</div>
               <div className="text-sm font-bold text-[#6cf8bb] flex items-center gap-1">
                 <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
                 {CURRENT_ORDER.genericSubstitute}
               </div>
             </div>
             <div className="text-right">
-              <span className="text-[11px] text-slate-400">Save 85.6%</span>
+              <span className="text-[11px] text-slate-400">Save {formatINR(CURRENT_ORDER.savings)}</span>
               <div className="text-base font-extrabold text-white font-display">
-                $14.20
+                {formatINR(CURRENT_ORDER.priceGeneric)}
               </div>
             </div>
           </div>
@@ -298,7 +294,7 @@ export const RxScannerScreen: React.FC<RxScannerScreenProps> = ({
             onClick={() => onNavigateScreen('customer-app')}
             className="w-full py-2.5 bg-[#006c49] hover:bg-[#006c49]/90 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-md transition-colors"
           >
-            <span>Confirm &amp; Proceed to Generic Comparison</span>
+            <span>Confirm &amp; Compare Jan Aushadhi Savings</span>
             <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
           </button>
         </div>
@@ -306,9 +302,8 @@ export const RxScannerScreen: React.FC<RxScannerScreenProps> = ({
 
       {/* Bottom Camera Shutter Controls */}
       <div className="px-6 py-4 z-30 bg-[#001026]/90 backdrop-blur-md flex items-center justify-around border-t border-white/10">
-        {/* Gallery Upload */}
         <button
-          onClick={() => onShowToast('Upload prescription from Photo Gallery')}
+          onClick={() => onShowToast('Upload prescription photo from gallery')}
           className="flex flex-col items-center gap-1 text-slate-300 hover:text-white"
         >
           <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
@@ -317,7 +312,6 @@ export const RxScannerScreen: React.FC<RxScannerScreenProps> = ({
           <span className="text-[10px]">Gallery</span>
         </button>
 
-        {/* Shutter Button */}
         <div className="relative flex items-center justify-center">
           <div className="absolute w-16 h-16 rounded-full border-2 border-[#6cf8bb]/40 animate-pulse-ring pointer-events-none"></div>
           <button
@@ -330,7 +324,6 @@ export const RxScannerScreen: React.FC<RxScannerScreenProps> = ({
           </button>
         </div>
 
-        {/* Multi-page Selector */}
         <button
           onClick={() => {
             const nextPage = selectedPage === 1 ? 2 : 1;
@@ -352,7 +345,6 @@ export const RxScannerScreen: React.FC<RxScannerScreenProps> = ({
     return (
       <div className="py-8 px-4 flex justify-center items-center min-h-[calc(100vh-60px)] bg-slate-900">
         <div className="w-[390px] h-[844px] bg-[#000d1d] rounded-[44px] shadow-2xl border-[10px] border-slate-800 overflow-hidden relative flex flex-col">
-          {/* Phone Speaker & Notch bar */}
           <div className="w-full bg-[#001026] pt-3 pb-1 px-6 flex justify-between items-center text-white text-[11px] font-mono z-50">
             <span>9:41</span>
             <div className="w-20 h-4 bg-black rounded-full"></div>
@@ -370,13 +362,12 @@ export const RxScannerScreen: React.FC<RxScannerScreenProps> = ({
     );
   }
 
-  // Responsive Web View Workstation
+  // Responsive Web View
   return (
     <div className="min-h-[calc(100vh-56px)] bg-[#000d1d] text-white flex flex-col items-center justify-center p-3 sm:p-6 lg:p-8 selection:bg-[#6cf8bb] selection:text-[#002113]">
       <div className="max-w-5xl w-full bg-[#001026] rounded-3xl border border-white/10 shadow-2xl overflow-hidden flex flex-col lg:flex-row">
-        {/* Left: Viewfinder & Shutter Area (lg: 58% width) */}
+        {/* Left: Viewfinder */}
         <div className="lg:w-[58%] flex flex-col border-b lg:border-b-0 lg:border-r border-white/10 relative bg-[#000d1d]">
-          {/* Top Controls Bar */}
           <div className="px-4 py-3 flex items-center justify-between z-30 bg-[#001026]/90 backdrop-blur-md border-b border-white/10">
             <button
               onClick={() => onNavigateScreen('customer-app')}
@@ -386,8 +377,8 @@ export const RxScannerScreen: React.FC<RxScannerScreenProps> = ({
             </button>
 
             <div className="text-center">
-              <h2 className="font-display font-bold text-sm text-white">Live Prescription Scanner</h2>
-              <p className="text-[10px] text-[#6cf8bb]">AI Salt &amp; Molecule Extraction Engine</p>
+              <h2 className="font-display font-bold text-sm text-white">Live Prescription OCR Scanner</h2>
+              <p className="text-[10px] text-[#6cf8bb]">CDSCO &amp; Jan Aushadhi Salt Extraction</p>
             </div>
 
             <button
@@ -405,7 +396,6 @@ export const RxScannerScreen: React.FC<RxScannerScreenProps> = ({
             </button>
           </div>
 
-          {/* Hardware Source Switcher */}
           <div className="flex items-center justify-center gap-2 py-2 px-4 z-30 bg-[#001026] border-b border-white/10">
             <button
               onClick={startCamera}
@@ -423,7 +413,7 @@ export const RxScannerScreen: React.FC<RxScannerScreenProps> = ({
                 stopCamera();
                 setSourceType('fixture');
                 setCapturedSnapshot(null);
-                onShowToast('Switched to high-res clinical demo fixture');
+                onShowToast('Switched to Apollo Clinic Pune demo prescription');
               }}
               className={`px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
                 sourceType === 'fixture'
@@ -432,7 +422,7 @@ export const RxScannerScreen: React.FC<RxScannerScreenProps> = ({
               }`}
             >
               <span className="material-symbols-outlined text-[16px]">image</span>
-              Demo Prescription Pad
+              Demo Rx Pad (Pune)
             </button>
             <button
               onClick={() => fileInputRef.current?.click()}
@@ -447,9 +437,7 @@ export const RxScannerScreen: React.FC<RxScannerScreenProps> = ({
             </button>
           </div>
 
-          {/* Camera Viewfinder Area */}
           <div className="relative flex items-center justify-center p-4 min-h-[340px] sm:min-h-[400px]">
-            {/* Prescription Doc under viewfinder */}
             <div className="relative w-full max-w-sm aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl border border-white/20 bg-slate-900">
               {sourceType === 'camera' ? (
                 <video
@@ -462,7 +450,7 @@ export const RxScannerScreen: React.FC<RxScannerScreenProps> = ({
               ) : capturedSnapshot ? (
                 <img
                   src={capturedSnapshot}
-                  alt="Uploaded Prescription Target"
+                  alt="Uploaded Indian Prescription"
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -473,15 +461,11 @@ export const RxScannerScreen: React.FC<RxScannerScreenProps> = ({
                 />
               )}
 
-              {/* Flashlight overlay if active */}
               {flashOn && (
                 <div className="absolute inset-0 bg-yellow-100/15 pointer-events-none mix-blend-screen"></div>
               )}
 
-              {/* Dark vignette borders outside scan zone */}
               <div className="absolute inset-0 border-[16px] border-black/40 pointer-events-none"></div>
-
-              {/* Glowing Animated Laser Scanline */}
               <div className="absolute inset-x-4 h-0.5 bg-[#6cf8bb] shadow-[0_0_12px_#6cf8bb] animate-scan pointer-events-none"></div>
 
               {/* Corner Brackets */}
@@ -490,34 +474,33 @@ export const RxScannerScreen: React.FC<RxScannerScreenProps> = ({
               <div className="absolute bottom-4 left-4 w-7 h-7 border-b-3 border-l-3 border-[#6cf8bb] rounded-bl-lg pointer-events-none"></div>
               <div className="absolute bottom-4 right-4 w-7 h-7 border-b-3 border-r-3 border-[#6cf8bb] rounded-br-lg pointer-events-none"></div>
 
-              {/* OCR Real-Time Bounding Detection Boxes */}
+              {/* Detection Boxes */}
               <div className="absolute top-[38%] left-[8%] right-[8%] p-2 rounded-lg border-2 border-[#6cf8bb] bg-[#006c49]/20 backdrop-blur-xs shadow-lg animate-pulse">
                 <div className="flex items-center justify-between text-[11px] font-bold text-[#6cf8bb]">
                   <span className="flex items-center gap-1">
                     <span className="material-symbols-outlined text-[14px]">auto_awesome</span>
-                    Lipitor 20mg
+                    {CURRENT_ORDER.brandPrescribed}
                   </span>
                   <span className="bg-[#6cf8bb] text-[#002113] text-[9px] px-1.5 py-0.2 rounded font-extrabold">
-                    85.6% Generic Match
+                    83.8% Jan Aushadhi Match
                   </span>
                 </div>
               </div>
 
               <div className="absolute top-[52%] left-[8%] right-[12%] p-1.5 rounded-lg border border-dashed border-[#6cf8bb]/80 bg-black/40 text-[10px] text-white">
-                <span className="text-[#6ffbbe] font-semibold">Dosage:</span> 1 PO qHS (Bedtime)
+                <span className="text-[#6ffbbe] font-semibold">Dosage Schedule:</span> 1 Tab Bedtime (qHS) + SOS
               </div>
 
               <div className="absolute bottom-[16%] right-[8%] px-2 py-1 rounded border border-[#6cf8bb]/60 bg-black/40 text-[9px] text-[#6cf8bb] flex items-center gap-1">
                 <span className="material-symbols-outlined text-[12px]">verified</span>
-                Doctor Signature Validated
+                Dr. Rajesh Deshmukh MMC Reg Validated
               </div>
             </div>
           </div>
 
-          {/* Bottom Camera Shutter Controls */}
           <div className="px-6 py-3.5 bg-[#001026] flex items-center justify-around border-t border-white/10">
             <button
-              onClick={() => onShowToast('Upload prescription from Photo Gallery')}
+              onClick={() => onShowToast('Upload prescription from gallery')}
               className="flex flex-col items-center gap-1 text-slate-300 hover:text-white"
             >
               <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center">
@@ -554,10 +537,9 @@ export const RxScannerScreen: React.FC<RxScannerScreenProps> = ({
           </div>
         </div>
 
-        {/* Right: AI OCR Extraction & Generic Match Console (lg: 42% width) */}
+        {/* Right: AI OCR Extraction & Generic Match Console */}
         <div className="lg:w-[42%] p-6 flex flex-col justify-between bg-[#00142e]/70 space-y-4">
           <div className="space-y-4">
-            {/* Header Status */}
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#006c49]"></span>
@@ -566,59 +548,56 @@ export const RxScannerScreen: React.FC<RxScannerScreenProps> = ({
                 </span>
               </div>
               <span className="text-[10px] font-mono bg-[#0b2545] text-[#6cf8bb] px-2 py-0.5 rounded border border-[#6cf8bb]/20">
-                HIPAA 256-BIT ENCRYPTED
+                CDSCO / ABDM VERIFIED
               </span>
             </div>
 
-            {/* Molecule Analysis Details */}
             <div className="bg-white/5 rounded-2xl p-4 border border-white/10 space-y-3">
               <div className="flex justify-between items-start">
                 <div>
                   <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Prescribed Brand</span>
                   <div className="text-base font-bold text-white mt-0.5">{CURRENT_ORDER.brandPrescribed}</div>
-                  <span className="text-xs text-slate-400 line-through">${CURRENT_ORDER.priceBrand.toFixed(2)} / month</span>
+                  <span className="text-xs text-slate-400 line-through">{formatINR(CURRENT_ORDER.priceBrand)} / month</span>
                 </div>
                 <span className="px-2 py-0.5 rounded-md bg-[#ba1a1a]/30 text-rose-300 text-[10px] font-bold">
-                  Brand Markup 700%
+                  Brand Markup 620%
                 </span>
               </div>
 
               <div className="pt-2 border-t border-white/10">
-                <span className="text-[10px] text-[#6cf8bb] font-bold uppercase tracking-wider block">Bio-Equivalent Generic</span>
+                <span className="text-[10px] text-[#6cf8bb] font-bold uppercase tracking-wider block">Jan Aushadhi Generic Substitute</span>
                 <div className="text-base font-bold text-[#6cf8bb] flex items-center gap-1.5 mt-0.5">
                   <span className="material-symbols-outlined text-[18px]">verified</span>
                   {CURRENT_ORDER.genericSubstitute}
                 </div>
                 <div className="flex items-baseline gap-2 mt-1">
-                  <span className="text-xl font-extrabold text-white font-display">${CURRENT_ORDER.priceGeneric.toFixed(2)}</span>
-                  <span className="text-xs text-[#6ffbbe] font-semibold">Save 85.6% ($84.30)</span>
+                  <span className="text-xl font-extrabold text-white font-display">{formatINR(CURRENT_ORDER.priceGeneric)}</span>
+                  <span className="text-xs text-[#6ffbbe] font-semibold">Save 83.8% ({formatINR(CURRENT_ORDER.savings)})</span>
                 </div>
               </div>
 
               <div className="p-2.5 rounded-xl bg-black/30 border border-white/5 space-y-1 text-xs">
                 <div className="flex justify-between text-slate-300">
-                  <span>Extracted Salt:</span>
-                  <span className="text-white font-semibold">Atorvastatin Calcium USP</span>
+                  <span>Prescribing Doctor:</span>
+                  <span className="text-white font-semibold">Dr. Rajesh Deshmukh, MD (Pune)</span>
                 </div>
                 <div className="flex justify-between text-slate-300">
-                  <span>Dosage Schedule:</span>
-                  <span className="text-white font-semibold">1 Tab PO qHS (Bedtime)</span>
+                  <span>Council Registration:</span>
+                  <span className="text-white font-semibold">MMC Reg #2009/04/1822</span>
                 </div>
                 <div className="flex justify-between text-slate-300">
-                  <span>Pharmacist Review:</span>
-                  <span className="text-[#6cf8bb] font-bold">Pre-Approved (RPh Vance)</span>
+                  <span>Pharmacist Signoff:</span>
+                  <span className="text-[#6cf8bb] font-bold">Pre-Approved (Dr. Amit Patil D.Pharm)</span>
                 </div>
               </div>
             </div>
 
-            {/* Security Guarantee Pill */}
             <div className="flex items-center gap-2 p-3 rounded-xl bg-[#002113]/40 border border-[#006c49]/40 text-xs text-slate-300">
               <span className="material-symbols-outlined text-[#6cf8bb] text-[18px]">shield</span>
-              <span>100% FDA Bio-Equivalence guaranteed with verified batch cold-chain tracking.</span>
+              <span>100% CDSCO &amp; Jan Aushadhi Bio-Equivalence guaranteed with verified batch cold-chain tracking.</span>
             </div>
           </div>
 
-          {/* CTA Button */}
           <div className="space-y-2 pt-2">
             <button
               onClick={() => onNavigateScreen('customer-app')}
